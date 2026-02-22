@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --background: rgb(255, 255, 255);
+  --foreground: rgb(23, 23, 23);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: rgb(10, 10, 10);
+    --foreground: rgb(237, 237, 237);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Cascadia Code", Arial, Helvetica, sans-serif;
+  padding: 10px;
+}

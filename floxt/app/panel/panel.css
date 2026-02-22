@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root{
+    --panel-background: rgb(235, 235, 235);
+    --panel-border: rgba(23, 23, 23, 0.3);
+}
+
+@media (prefers-color-scheme: dark){
+    :root {
+        --panel-background: rgb(30, 30, 30);
+        --panel-border: rgba(237, 237, 237, 0.3);
+    }
+}
+
+section{
+    background: var(--panel-background);
+    width: fit-content;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: box-shadow 0.1s, border 0.1s;
+}
+
+section:hover{
+    border: 1px solid var(--panel-border);
+}

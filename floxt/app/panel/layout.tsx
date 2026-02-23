@@ -2,7 +2,7 @@
 
 import "./panel.css";
 import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save } from 'lucide-react';
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface PanelLayoutProps {
     text: string;
@@ -22,15 +22,15 @@ export default function PanelLayout({
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleNew = () => {
+    const handleNew = useCallback(() => {
         setText("");
         setTitle("");
         setSavedText("");
         setSavedTitle("");
         setIsFileTracked(false);
-    };
+    }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
-    const handleSave = () => {
+    const handleSave = useCallback(() => {
         const blob = new Blob([text], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
 
@@ -47,11 +47,39 @@ export default function PanelLayout({
         setSavedText(text);
         setSavedTitle(fileName);
         setIsFileTracked(true);
-    };
+    }, [text, title, setSavedText, setSavedTitle, setIsFileTracked]);
 
-    const handleOpenClick = () => {
+    const handleOpenClick = useCallback(() => {
         fileInputRef.current?.click();
-    };
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key.toLowerCase() === 's') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSave();
+                } else if (e.key.toLowerCase() === 'o') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenClick();
+                }
+            }
+
+            if (e.altKey && e.key.toLowerCase() === 'n') {
+                e.preventDefault();
+                e.stopPropagation();
+                handleNew();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown, { capture: true });
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown, { capture: true });
+        };
+    }, [handleNew, handleSave, handleOpenClick]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -92,17 +120,26 @@ export default function PanelLayout({
 
                         <button onClick={handleNew} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
                             <Plus color="white" size={28} className="mt-2 mb-2" />
-                            <p className="m-2 mr-5 whitespace-nowrap text-white">New</p>
+                            <div className="flex flex-col items-start m-2 mr-5">
+                                <p className="whitespace-nowrap text-white">New</p>
+                                <span className="text-[10px] text-neutral-400 font-mono">Alt+N</span>
+                            </div>
                         </button>
 
                         <button onClick={handleSave} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
                             <Save color="white" size={28} className="mt-2 mb-2" />
-                            <p className="m-2 mr-5 whitespace-nowrap text-white">Save</p>
+                            <div className="flex flex-col items-start m-2 mr-5">
+                                <p className="whitespace-nowrap text-white">Save</p>
+                                <span className="text-[10px] text-neutral-400 font-mono">Ctrl+S</span>
+                            </div>
                         </button>
 
                         <button onClick={handleOpenClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
                             <FolderOpen color="white" size={28} className="mt-2 mb-2" />
-                            <p className="m-2 mr-5 whitespace-nowrap text-white">Open</p>
+                            <div className="flex flex-col items-start m-2 mr-5">
+                                <p className="whitespace-nowrap text-white">Open</p>
+                                <span className="text-[10px] text-neutral-400 font-mono">Ctrl+O</span>
+                            </div>
                         </button>
 
                         <button className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>

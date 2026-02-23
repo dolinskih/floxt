@@ -16,10 +16,5 @@ section{
     background: var(--panel-background);
     width: fit-content;
     border-radius: 10px;
-    border: 1px solid transparent;
-    transition: box-shadow 0.1s, border 0.1s;
-}
-
-section:hover{
-    border: 1px solid var(--panel-border);
+    transition: box-shadow 0.1s;
 }

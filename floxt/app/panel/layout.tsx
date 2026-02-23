@@ -1,21 +1,14 @@
 "use client";
 
-import { Cascadia_Code } from "next/font/google";
 import "./panel.css";
-import styles from './panel.module.css';
 import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown } from 'lucide-react';
 import { useState } from "react";
-
-const cascadiaCode = Cascadia_Code({
-    variable: "--font-cascadia-code",
-    subsets: ["latin-ext"],
-});
 
 export default function PanelLayout() {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-        <section className={`p-3 hover:shadow-lg dark:shadow-white/15 transition-all duration-150 ease-in-out w-fit ${isOpen ? 'pr-5' : ''}`}>
+        <section className={`p-3 h-fit hover:shadow-lg dark:shadow-white/15 transition-all duration-150 ease-in-out w-fit ${isOpen ? 'pr-5' : ''} border border-neutral-700`}>
             {isOpen && (
                 <div
                     className={`overflow-hidden transition-all duration-150 ease-in-out flex flex-col ${isOpen ? 'max-h-[500px] max-w-[300px] opacity-100' : 'max-h-0 max-w-0 opacity-0'

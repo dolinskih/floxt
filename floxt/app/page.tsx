@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import PanelLayout from "./panel/layout";
-import NoteTitleLayout from "./notetitle/layout";
-import TextEditor from "./texteditor/layout";
+import PanelLayout from "./PanelLayout";
+import NoteTitleLayout from "./NoteTitle";
+import TextEditor from "./TextEditor";
 
 export default function Home() {
   const [text, setText] = useState<string>("");

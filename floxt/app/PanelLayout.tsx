@@ -20,6 +20,7 @@ export default function PanelLayout({
     text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
+    const [fileHandle, setFileHandle] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleNew = useCallback(() => {
@@ -28,15 +29,47 @@ export default function PanelLayout({
         setSavedText("");
         setSavedTitle("");
         setIsFileTracked(false);
+        setFileHandle(null);
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
-    const handleSave = useCallback(() => {
+    const handleSave = useCallback(async () => {
+        const fileName = title.trim() === "" ? "Untitled" : title;
+
+        try {
+            if ('showSaveFilePicker' in window) {
+                let handle = fileHandle;
+
+                if (!handle) {
+                    handle = await (window as any).showSaveFilePicker({
+                        suggestedName: `${fileName}.floxt`,
+                        types: [{
+                            description: 'Floxt File',
+                            accept: { 'text/plain': ['.floxt'] },
+                        }],
+                    });
+                    setFileHandle(handle);
+                }
+
+                const writable = await handle.createWritable();
+                await writable.write(text);
+                await writable.close();
+
+                const actualFileName = handle.name.replace(/\.floxt$/i, "");
+                setSavedText(text);
+                setSavedTitle(actualFileName);
+                setTitle(actualFileName);
+                setIsFileTracked(true);
+                return;
+            }
+        } catch (err: any) {
+            if (err.name === 'AbortError') return;
+        }
+
         const blob = new Blob([text], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
         a.href = url;
-        const fileName = title.trim() === "" ? "Untitled" : title;
         a.download = `${fileName}.floxt`;
         document.body.appendChild(a);
         a.click();
@@ -47,11 +80,36 @@ export default function PanelLayout({
         setSavedText(text);
         setSavedTitle(fileName);
         setIsFileTracked(true);
-    }, [text, title, setSavedText, setSavedTitle, setIsFileTracked]);
+    }, [text, title, fileHandle, setSavedText, setSavedTitle, setIsFileTracked, setTitle]);
 
-    const handleOpenClick = useCallback(() => {
+    const handleOpenClick = useCallback(async () => {
+        try {
+            if ('showOpenFilePicker' in window) {
+                const [handle] = await (window as any).showOpenFilePicker({
+                    types: [{
+                        description: 'Floxt File',
+                        accept: { 'text/plain': ['.floxt'] },
+                    }],
+                });
+                const file = await handle.getFile();
+                const fileContent = await file.text();
+
+                const fileNameWithoutExt = file.name.replace(/\.floxt$/i, "");
+
+                setText(fileContent);
+                setTitle(fileNameWithoutExt);
+                setSavedText(fileContent);
+                setSavedTitle(fileNameWithoutExt);
+                setIsFileTracked(true);
+                setFileHandle(handle);
+                return;
+            }
+        } catch (err: any) {
+            if (err.name === 'AbortError') return;
+        }
+
         fileInputRef.current?.click();
-    }, []);
+    }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -96,6 +154,7 @@ export default function PanelLayout({
                 setSavedText(fileContent);
                 setSavedTitle(fileNameWithoutExt);
                 setIsFileTracked(true);
+                setFileHandle(null);
             }
         };
         reader.readAsText(file);

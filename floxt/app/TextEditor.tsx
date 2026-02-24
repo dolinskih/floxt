@@ -44,7 +44,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
 
     const highlightFloxt = (rawText: string) => {
         const parts = rawText.split(/(\/(?:h[1-6]|b|i|u|s|-|0|O|code|link|table|\[\]|\[x\]);|;\/)/gi);
-
+        
         return parts.map((part, i) => {
             if (part.match(/(\/(?:h[1-6]|b|i|u|s|-|0|O|code|link|table|\[\]|\[x\]);|;\/)/i)) {
                 return <span key={i} className="text-yellow-500 font-bold">{part}</span>;
@@ -55,7 +55,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
 
     const handleReadViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.target as HTMLElement;
-
+        
         if (target.tagName === 'INPUT' && target.classList.contains('floxt-checkbox')) {
             const targetIndex = parseInt(target.getAttribute('data-cb-index') || "-1", 10);
             if (targetIndex > -1) {
@@ -109,8 +109,9 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
 
         do {
             previous = parsed;
+            
             parsed = parsed.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);([\s\S]*?);\//g, (match, tag, content) => {
-                switch (tag) {
+                switch(tag) {
                     case 'h1': return `<h1 class="text-4xl font-bold mt-4 mb-2">${content}</h1>`;
                     case 'h2': return `<h2 class="text-3xl font-bold mt-3 mb-2">${content}</h2>`;
                     case 'h3': return `<h3 class="text-2xl font-bold mt-3 mb-2">${content}</h3>`;
@@ -121,32 +122,31 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     case 'i': return `<em>${content}</em>`;
                     case 'u': return `<u class="underline underline-offset-4 decoration-2">${content}</u>`;
                     case 's': return `<del class="decoration-2">${content}</del>`;
-
+                    
                     case '-': {
                         const cleanContent = content.trim();
                         const listItems = cleanContent.replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li class="ml-6 my-1">$1</li>');
                         return `<ul class="list-disc mb-2 mt-2">${listItems}</ul>`;
                     }
-                    case '0':
+                    case '0': 
                     case 'O': {
                         const cleanContent = content.trim();
                         const listItems = cleanContent.replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li class="ml-6 my-1">$1</li>');
                         return `<ol class="list-decimal mb-2 mt-2">${listItems}</ol>`;
                     }
-
+                    
                     case 'code': {
                         const safeCode = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                         return `<code class="bg-neutral-950 border border-neutral-800 text-emerald-400 font-mono px-2 py-1 rounded text-sm">${safeCode}</code>`;
                     }
 
-                    // --- NEW: Table Parser ---
                     case 'table': {
                         const lines = content.trim().split(/\r?\n/);
                         if (lines.length === 0) return '';
-
+                        
                         const headers = lines[0].split('|').map((cell: string) => `<th class="border border-neutral-700 px-4 py-2 bg-neutral-800 text-left font-bold">${cell.trim()}</th>`).join('');
                         const thead = `<thead><tr>${headers}</tr></thead>`;
-
+                        
                         let tbody = '';
                         if (lines.length > 1) {
                             const rows = lines.slice(1).map((line: string) => {
@@ -155,7 +155,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                             }).join('');
                             tbody = `<tbody>${rows}</tbody>`;
                         }
-
+                        
                         return `<div class="overflow-x-auto my-4 rounded border border-neutral-700"><table class="w-full border-collapse text-sm text-gray-200">${thead}${tbody}</table></div>`;
                     }
 
@@ -180,17 +180,20 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         return parsed;
     };
 
-    const linesCount = (text || "").split('\n').length;
+    const safeText = text || "";
+    const linesCount = safeText.split('\n').length;
+    const charsCount = safeText.length;
+    const wordsCount = safeText.trim() === "" ? 0 : safeText.trim().split(/\s+/).length;
 
     return (
-        <div className="w-full flex-1 min-h-[600px] bg-neutral-900 rounded-lg border border-neutral-700 shadow-lg flex flex-col overflow-hidden">
+        <div className="w-full flex-1 min-h-[600px] bg-neutral-900 rounded-lg border border-neutral-700 shadow-lg flex flex-col overflow-hidden relative">
             {viewMode === 'code' ? (
                 <div className="flex flex-1 overflow-hidden">
                     {showLineNumbers && (
-                        <div
+                        <div 
                             ref={lineNumbersRef}
                             style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-                            className="w-12 flex-none bg-neutral-900/50 border-r border-neutral-800 text-neutral-500 font-mono text-right pr-3 py-4 overflow-hidden select-none"
+                            className="w-12 flex-none bg-neutral-900/50 border-r border-neutral-800 text-neutral-500 font-mono text-right pr-3 py-4 overflow-hidden select-none pb-12"
                         >
                             {Array.from({ length: linesCount }).map((_, i) => (
                                 <div key={i}>{i + 1}</div>
@@ -199,14 +202,14 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     )}
 
                     <div className="relative flex-1 overflow-hidden bg-transparent">
-                        <div
+                        <div 
                             ref={preRef}
                             style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-                            className="absolute inset-0 px-4 py-4 font-mono text-gray-200 whitespace-pre pointer-events-none overflow-hidden"
+                            className="absolute inset-0 px-4 py-4 pb-12 font-mono text-gray-200 whitespace-pre pointer-events-none overflow-hidden"
                             aria-hidden="true"
                         >
                             {highlightFloxt(text)}
-                            {(text || "").endsWith('\n') ? <br /> : null}
+                            {safeText.endsWith('\n') ? <br /> : null}
                         </div>
 
                         <textarea
@@ -216,20 +219,26 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                             onScroll={handleScroll}
                             onKeyDown={handleKeyDown}
                             style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-                            className="absolute inset-0 px-4 py-4 font-mono bg-transparent text-transparent caret-white resize-none outline-none z-10 placeholder:text-neutral-500 whitespace-pre overflow-auto"
+                            className="absolute inset-0 px-4 py-4 pb-12 font-mono bg-transparent text-transparent caret-white resize-none outline-none z-10 placeholder:text-neutral-500 whitespace-pre overflow-auto"
                             placeholder="Start typing your note here in Floxt format..."
-                            spellCheck="false"
+                            spellCheck="false" 
                         />
                     </div>
                 </div>
             ) : (
-                <div
-                    onClick={handleReadViewClick}
+                <div 
+                    onClick={handleReadViewClick} 
                     style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}
-                    className="w-full h-full p-4 text-gray-200 font-sans overflow-y-auto whitespace-pre-wrap outline-none pr-2"
+                    className="flex-1 w-full p-4 pb-12 text-gray-200 font-sans overflow-y-auto whitespace-pre-wrap outline-none pr-2"
                     dangerouslySetInnerHTML={{ __html: parseFloxt(text) }}
                 />
             )}
+
+            <div className="flex-none absolute bottom-0 left-0 right-0 bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-700/50 px-4 py-1.5 flex justify-end items-center text-xs text-neutral-400 font-mono select-none z-20">
+                <span>{wordsCount} words</span>
+                <span className="mx-2 text-neutral-600">•</span>
+                <span>{charsCount} characters</span>
+            </div>
         </div>
     );
 }

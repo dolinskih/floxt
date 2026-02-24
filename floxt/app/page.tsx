@@ -15,6 +15,9 @@ export default function Home() {
   const [isFileTracked, setIsFileTracked] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'code' | 'read'>('code');
 
+  const [fontSize, setFontSize] = useState<number>(14);
+  const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
+
   const hasUnsavedChanges = text !== savedText || title !== savedTitle;
 
   return (
@@ -31,10 +34,20 @@ export default function Home() {
         setIsFileTracked={setIsFileTracked}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        fontSize={fontSize}
+        setFontSize={setFontSize}
+        showLineNumbers={showLineNumbers}
+        setShowLineNumbers={setShowLineNumbers}
       />
       <div className="flex-1 flex flex-col">
         <NoteTitle title={title} setTitle={setTitle} />
-        <TextEditor text={text} setText={setText} viewMode={viewMode}/>
+        <TextEditor
+          text={text}
+          setText={setText}
+          viewMode={viewMode}
+          fontSize={fontSize}
+          showLineNumbers={showLineNumbers}
+        />
       </div>
     </main>
   );

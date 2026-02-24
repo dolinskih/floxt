@@ -6,9 +6,11 @@ interface TextEditorProps {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
     viewMode: 'code' | 'read';
+    fontSize: number;
+    showLineNumbers: boolean;
 }
 
-export default function TextEditor({ text, setText, viewMode }: TextEditorProps) {
+export default function TextEditor({ text, setText, viewMode, fontSize, showLineNumbers }: TextEditorProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const preRef = useRef<HTMLDivElement>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -42,7 +44,6 @@ export default function TextEditor({ text, setText, viewMode }: TextEditorProps)
         }
     };
 
-    // --- SYNTAX HIGHLIGHTER FOR CODE VIEW ---
     const highlightFloxt = (rawText: string) => {
         const parts = rawText.split(/(\/(?:h[1-6]|b|i|u|s|-|0|O|code|link|\[\]|\[x\]);|;\/)/gi);
         
@@ -54,7 +55,6 @@ export default function TextEditor({ text, setText, viewMode }: TextEditorProps)
         });
     };
 
-    // --- FLOXT CONVERTER ---
     const parseFloxt = (rawText: string) => {
         let parsed = rawText;
         let previous;
@@ -114,30 +114,36 @@ export default function TextEditor({ text, setText, viewMode }: TextEditorProps)
         <div className="w-full flex-1 min-h-[600px] bg-neutral-900 rounded-lg border border-neutral-700 shadow-lg flex flex-col overflow-hidden">
             {viewMode === 'code' ? (
                 <div className="flex flex-1 overflow-hidden">
-                    <div 
-                        ref={lineNumbersRef}
-                        className="w-12 flex-none bg-neutral-900/50 border-r border-neutral-800 text-neutral-500 font-mono text-sm text-right pr-3 py-4 overflow-hidden select-none"
-                    >
-                        {Array.from({ length: linesCount }).map((_, i) => (
-                            <div key={i}>{i + 1}</div>
-                        ))}
-                    </div>
+                    {showLineNumbers && (
+                        <div 
+                            ref={lineNumbersRef}
+                            style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
+                            className="w-12 flex-none bg-neutral-900/50 border-r border-neutral-800 text-neutral-500 font-mono text-right pr-3 py-4 overflow-hidden select-none"
+                        >
+                            {Array.from({ length: linesCount }).map((_, i) => (
+                                <div key={i}>{i + 1}</div>
+                            ))}
+                        </div>
+                    )}
                     <div className="relative flex-1 overflow-hidden bg-transparent">
                         <div 
                             ref={preRef}
-                            className="absolute inset-0 px-4 py-4 font-mono text-sm text-gray-200 whitespace-pre pointer-events-none overflow-hidden"
+                            style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
+                            className="absolute inset-0 px-4 py-4 font-mono text-gray-200 whitespace-pre pointer-events-none overflow-hidden"
                             aria-hidden="true"
                         >
                             {highlightFloxt(text)}
                             {text.endsWith('\n') ? <br /> : null}
                         </div>
+
                         <textarea
                             ref={textareaRef}
                             value={text}
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
                             onScroll={handleScroll}
                             onKeyDown={handleKeyDown}
-                            className="absolute inset-0 px-4 py-4 font-mono text-sm bg-transparent text-transparent caret-white resize-none outline-none z-10 placeholder:text-neutral-500 whitespace-pre overflow-auto"
+                            style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
+                            className="absolute inset-0 px-4 py-4 font-mono bg-transparent text-transparent caret-white resize-none outline-none z-10 placeholder:text-neutral-500 whitespace-pre overflow-auto"
                             placeholder="Start typing your note here in Floxt format..."
                             spellCheck="false" 
                         />
@@ -145,6 +151,7 @@ export default function TextEditor({ text, setText, viewMode }: TextEditorProps)
                 </div>
             ) : (
                 <div 
+                    style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}
                     className="w-full h-full p-4 text-gray-200 font-sans overflow-y-auto whitespace-pre-wrap outline-none pr-2"
                     dangerouslySetInnerHTML={{ __html: parseFloxt(text) }}
                 />

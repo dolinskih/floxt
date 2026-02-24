@@ -17,6 +17,10 @@ interface PanelLayoutProps {
     setIsFileTracked: React.Dispatch<React.SetStateAction<boolean>>;
     viewMode: 'code' | 'read';
     setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read'>>;
+    fontSize: number;
+    setFontSize: React.Dispatch<React.SetStateAction<number>>;
+    showLineNumbers: boolean;
+    setShowLineNumbers: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const commandsData = [
@@ -39,7 +43,7 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
@@ -334,8 +338,36 @@ export default function PanelLayout({
             </Modal>
 
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Settings">
-                <div className="max-h-[60vh] overflow-y-auto pr-2">
-                    <p>Settings coming soon...</p>
+                <div className="flex flex-col gap-6 p-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-gray-200">Editor Font Size</span>
+                        <div className="flex items-center gap-4 bg-neutral-950 px-3 py-1.5 rounded border border-neutral-800">
+                            <button 
+                                onClick={() => setFontSize(f => Math.max(10, f - 1))} 
+                                className="text-neutral-400 hover:text-white cursor-pointer active:scale-95"
+                            >
+                                -
+                            </button>
+                            <span className="text-yellow-500 font-mono w-6 text-center">{fontSize}</span>
+                            <button 
+                                onClick={() => setFontSize(f => Math.min(24, f + 1))} 
+                                className="text-neutral-400 hover:text-white cursor-pointer active:scale-95"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <span className="text-gray-200">Show Line Numbers</span>
+                        <button 
+                            onClick={() => setShowLineNumbers(!showLineNumbers)}
+                            className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showLineNumbers ? 'bg-emerald-500' : 'bg-neutral-700'}`}
+                        >
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showLineNumbers ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </button>
+                    </div>
+
                 </div>
             </Modal>
         </div>

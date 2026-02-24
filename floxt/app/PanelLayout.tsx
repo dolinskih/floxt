@@ -17,6 +17,23 @@ interface PanelLayoutProps {
     setIsFileTracked: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+const commandsData = [
+    { icon: "H1", name: "Heading 1", open: "/h1;", close: ";/" },
+    { icon: "H2", name: "Heading 2", open: "/h2;", close: ";/" },
+    { icon: "H3", name: "Heading 3", open: "/h3;", close: ";/" },
+    { icon: "H4", name: "Heading 4", open: "/h4;", close: ";/" },
+    { icon: "H5", name: "Heading 5", open: "/h5;", close: ";/" },
+    { icon: "H6", name: "Heading 6", open: "/h6;", close: ";/" },
+    { icon: "B", name: "Bold", open: "/b;", close: ";/" },
+    { icon: "I", name: "Italic", open: "/i;", close: ";/" },
+    { icon: "U", name: "Underline", open: "/u;", close: ";/" },
+    { icon: "S", name: "Strike-through", open: "/s;", close: ";/" },
+    { icon: "•", name: "Unordered list point", open: "/-;", close: ";/" },
+    { icon: "1.", name: "Ordered list point", open: "/O;", close: ";/" },
+    { icon: "☐", name: "Unchecked checkbox", open: "/[];", close: "None" },
+    { icon: "☑", name: "Checked checkbox", open: "/[x];", close: "None" },
+];
+
 export default function PanelLayout({
     text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked
 }: PanelLayoutProps) {
@@ -251,11 +268,32 @@ export default function PanelLayout({
             )}
 
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
-                <p>Command palette coming soon...</p>
+                <div className="max-h-[60vh] overflow-y-auto pr-2">
+                    <div className="flex flex-col gap-1 w-full">
+                        <div className="grid grid-cols-[40px_1fr_60px_60px] gap-4 pb-2 border-b border-neutral-700 text-neutral-500 font-bold mb-2 sticky top-0 bg-neutral-900 pt-1">
+                            <span className="text-center"></span>
+                            <span>Name</span>
+                            <span className="text-center">Open</span>
+                            <span className="text-center">Close</span>
+                        </div>
+                        {commandsData.map((cmd, idx) => (
+                            <div key={idx} className="grid grid-cols-[40px_1fr_60px_60px] gap-4 items-center py-2 border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 px-1 rounded transition-colors">
+                                <span className="text-gray-200 font-bold flex justify-center text-base">
+                                    {cmd.icon === 'S' ? <s className="decoration-2">{cmd.icon}</s> : cmd.icon === 'U' ? <u className="underline-offset-2 decoration-2">{cmd.icon}</u> : cmd.icon === 'I' ? <i className="font-serif">{cmd.icon}</i> : cmd.icon}
+                                </span>
+                                <span className="text-gray-300 truncate">{cmd.name}</span>
+                                <code className="text-yellow-500 bg-neutral-950 px-1 py-0.5 rounded text-center border border-neutral-800 text-xs">{cmd.open}</code>
+                                <code className={`px-1 py-0.5 rounded text-center border border-neutral-800 text-xs ${cmd.close === 'None' ? 'text-neutral-500 bg-transparent border-transparent' : 'text-yellow-500 bg-neutral-950'}`}>{cmd.close}</code>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </Modal>
 
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Settings">
-                <p>Settings coming soon...</p>
+                <div className="max-h-[60vh] overflow-y-auto pr-2">
+                    <p>Settings coming soon...</p>
+                </div>
             </Modal>
         </div>
     )

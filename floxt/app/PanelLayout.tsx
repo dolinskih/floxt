@@ -30,9 +30,12 @@ const commandsData = [
     { icon: "I", name: "Italic", open: "/i;", close: ";/" },
     { icon: "U", name: "Underline", open: "/u;", close: ";/" },
     { icon: "S", name: "Strike-through", open: "/s;", close: ";/" },
-    { icon: "•", name: "Unordered list point", open: "/-;", close: ";/" },
-    { icon: "1²3", name: "Ordered list point", open: "/O;", close: ";/" },
+    { icon: "•", name: "Unordered list block", open: "/-;", close: ";/" },
+    { icon: "123", name: "Ordered list block", open: "/0;", close: ";/" },
     { icon: "☐", name: "Unchecked checkbox", open: "/[];", close: "None" },
+    { icon: "☑", name: "Checked checkbox", open: "/[x];", close: "None" },
+    { icon: "🔗", name: "Hyperlink", open: "/link;url;", close: ";/" },
+    { icon: "</>", name: "Code block", open: "/code;", close: ";/" },
 ];
 
 export default function PanelLayout({
@@ -44,6 +47,8 @@ export default function PanelLayout({
 
     const [isCommandsOpen, setIsCommandsOpen] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+
+    const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
     const handleNew = useCallback(() => {
         setText("");
@@ -133,6 +138,16 @@ export default function PanelLayout({
         fileInputRef.current?.click();
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
+    const handleCopy = (textToCopy: string, id: string) => {
+        if (textToCopy === 'None') return;
+        navigator.clipboard.writeText(textToCopy);
+        setCopiedCommand(id);
+
+        setTimeout(() => {
+            setCopiedCommand(null);
+        }, 2000);
+    };
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey || e.metaKey) {
@@ -195,8 +210,8 @@ export default function PanelLayout({
     };
 
     return (
-        <div className="flex flex-col gap-2 w-fit h-fit items-stretch">
-            <section className={`p-3 bg-neutral-900 h-fit transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-700 rounded-lg`}>
+        <div className="flex flex-col gap-2 w-fit h-fit items-center">
+            <section className={`p-3 h-fit bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-700 rounded-lg`}>
 
                 <input
                     type="file"
@@ -288,20 +303,30 @@ export default function PanelLayout({
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
                 <div className="max-h-[60vh] overflow-y-auto pr-2">
                     <div className="flex flex-col gap-1 w-full">
-                        <div className="grid grid-cols-[40px_1fr_60px_60px] gap-4 pb-2 border-b border-neutral-700 text-neutral-500 font-bold mb-2 sticky top-0 bg-neutral-900 pt-1">
+                        <div className="grid grid-cols-[40px_1fr_100px_60px] gap-4 pb-2 border-b border-neutral-700 text-neutral-500 font-bold mb-2 sticky top-0 bg-neutral-900 pt-1">
                             <span className="text-center"></span>
                             <span>Name</span>
                             <span className="text-center">Open</span>
                             <span className="text-center">Close</span>
                         </div>
                         {commandsData.map((cmd, idx) => (
-                            <div key={idx} className="grid grid-cols-[40px_1fr_60px_60px] gap-4 items-center py-2 border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 px-1 rounded transition-colors">
+                            <div key={idx} className="grid grid-cols-[40px_1fr_100px_60px] gap-4 items-center py-2 border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 px-1 rounded transition-colors group">
                                 <span className="text-gray-200 font-bold flex justify-center text-base">
                                     {cmd.icon === 'S' ? <s className="decoration-2">{cmd.icon}</s> : cmd.icon === 'U' ? <u className="underline-offset-2 decoration-2">{cmd.icon}</u> : cmd.icon === 'I' ? <i className="font-serif">{cmd.icon}</i> : cmd.icon}
                                 </span>
                                 <span className="text-gray-300 truncate">{cmd.name}</span>
-                                <code className="text-yellow-500 bg-neutral-950 px-1 py-0.5 rounded text-center border border-neutral-800 text-xs">{cmd.open}</code>
-                                <code className={`px-1 py-0.5 rounded text-center border border-neutral-800 text-xs ${cmd.close === 'None' ? 'text-neutral-500 bg-transparent border-transparent' : 'text-yellow-500 bg-neutral-950'}`}>{cmd.close}</code>
+                                <code
+                                    onClick={() => handleCopy(cmd.open, `${idx}-open`)}
+                                    className={`px-1 py-0.5 rounded text-center border text-xs cursor-pointer transition-colors ${copiedCommand === `${idx}-open` ? 'text-emerald-400 bg-emerald-950/50 border-emerald-500' : 'text-yellow-500 bg-neutral-950 border-neutral-800 hover:border-yellow-600/50 hover:bg-neutral-900'}`}
+                                >
+                                    {cmd.open}
+                                </code>
+                                <code
+                                    onClick={() => handleCopy(cmd.close, `${idx}-close`)}
+                                    className={`px-1 py-0.5 rounded text-center border text-xs ${cmd.close === 'None' ? 'text-neutral-500 bg-transparent border-transparent' : `cursor-pointer transition-colors ${copiedCommand === `${idx}-close` ? 'text-emerald-400 bg-emerald-950/50 border-emerald-500' : 'text-yellow-500 bg-neutral-950 border-neutral-800 hover:border-yellow-600/50 hover:bg-neutral-900'}`}`}
+                                >
+                                    {cmd.close}
+                                </code>
                             </div>
                         ))}
                     </div>

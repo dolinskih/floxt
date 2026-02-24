@@ -34,7 +34,7 @@ export default function Home() {
       />
       <div className="flex-1 flex flex-col">
         <NoteTitle title={title} setTitle={setTitle} />
-        <TextEditor text={text} setText={setText} />
+        <TextEditor text={text} setText={setText} viewMode={viewMode}/>
       </div>
     </main>
   );

@@ -44,6 +44,7 @@ const commandsData = [
     { icon: "🔗", name: "Hyperlink", open: "/link;url;", close: ";/" },
     { icon: "</>", name: "Code block", open: "/code;", close: ";/" },
     { icon: "⊞", name: "Table", open: "/table;", close: ";/" },
+    { icon: "🖼️", name: "Image", open: "/img;url;", close: ";/" },
 ];
 
 export default function PanelLayout({

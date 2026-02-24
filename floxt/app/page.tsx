@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import PanelLayout from "./PanelLayout";
-import NoteTitleLayout from "./NoteTitle";
 import TextEditor from "./TextEditor";
+import NoteTitle from "./NoteTitle";
 
 export default function Home() {
   const [text, setText] = useState<string>("");
@@ -13,6 +13,7 @@ export default function Home() {
   const [savedTitle, setSavedTitle] = useState<string>("");
 
   const [isFileTracked, setIsFileTracked] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'code' | 'read'>('code');
 
   const hasUnsavedChanges = text !== savedText || title !== savedTitle;
 
@@ -28,9 +29,11 @@ export default function Home() {
         hasUnsavedChanges={hasUnsavedChanges}
         isFileTracked={isFileTracked}
         setIsFileTracked={setIsFileTracked}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
       />
       <div className="flex-1 flex flex-col">
-        <NoteTitleLayout title={title} setTitle={setTitle} />
+        <NoteTitle title={title} setTitle={setTitle} />
         <TextEditor text={text} setText={setText} />
       </div>
     </main>

@@ -1,7 +1,7 @@
 "use client";
 
 import "./panel.css";
-import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save } from 'lucide-react';
+import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 
@@ -15,6 +15,8 @@ interface PanelLayoutProps {
     hasUnsavedChanges: boolean;
     isFileTracked: boolean;
     setIsFileTracked: React.Dispatch<React.SetStateAction<boolean>>;
+    viewMode: 'code' | 'read';
+    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read'>>;
 }
 
 const commandsData = [
@@ -29,13 +31,12 @@ const commandsData = [
     { icon: "U", name: "Underline", open: "/u;", close: ";/" },
     { icon: "S", name: "Strike-through", open: "/s;", close: ";/" },
     { icon: "•", name: "Unordered list point", open: "/-;", close: ";/" },
-    { icon: "1.", name: "Ordered list point", open: "/O;", close: ";/" },
+    { icon: "1²3", name: "Ordered list point", open: "/O;", close: ";/" },
     { icon: "☐", name: "Unchecked checkbox", open: "/[];", close: "None" },
-    { icon: "☑", name: "Checked checkbox", open: "/[x];", close: "None" },
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
@@ -194,8 +195,8 @@ export default function PanelLayout({
     };
 
     return (
-        <div className="flex flex-col gap-2 w-fit h-fit">
-            <section className={`p-3 h-fit hover:shadow-lg dark:shadow-white/15 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-700 rounded-lg`}>
+        <div className="flex flex-col gap-2 w-fit h-fit items-stretch">
+            <section className={`p-3 bg-neutral-900 h-fit transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-700 rounded-lg`}>
 
                 <input
                     type="file"
@@ -252,7 +253,7 @@ export default function PanelLayout({
 
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-all duration-150 ease-in-out cursor-pointer ${isOpen ? 'mt-5' : ''}`}>
+                    className={`flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-all duration-150 ease-in-out cursor-pointer ${isOpen ? 'mt-5' : 'w-full justify-center'}`}>
                     {isOpen ? (
                         <ChevronUp color="white" size={28} className="mt-2 mb-2" />
                     ) : (
@@ -261,8 +262,25 @@ export default function PanelLayout({
                 </button>
             </section>
 
+            <div className={`flex items-center justify-center gap-2 p-1.5 transition-all duration-150 bg-neutral-900 border border-neutral-700 rounded-xl ${isOpen ? 'w-full' : 'w-fit'}`}>
+                <button
+                    onClick={() => setViewMode('code')}
+                    className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'code' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
+                >
+                    <Terminal size={isOpen ? 18 : 22} />
+                    {isOpen && <span className="text-sm font-mono whitespace-nowrap">Code view</span>}
+                </button>
+                <button
+                    onClick={() => setViewMode('read')}
+                    className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
+                >
+                    <BookOpen size={isOpen ? 18 : 22} />
+                    {isOpen && <span className="text-sm font-mono whitespace-nowrap">Read view</span>}
+                </button>
+            </div>
+
             {(hasUnsavedChanges || isFileTracked) && (
-                <div className={`text-xs font-mono px-2 transition-colors duration-150 ${hasUnsavedChanges ? 'text-yellow-500' : 'text-neutral-500'}`}>
+                <div className={`text-xs font-mono px-2 transition-colors duration-150 w-full text-center ${hasUnsavedChanges ? 'text-yellow-500' : 'text-neutral-500'}`}>
                     {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
                 </div>
             )}

@@ -3,6 +3,7 @@
 import "./panel.css";
 import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
+import Modal from "./Modal";
 
 interface PanelLayoutProps {
     text: string;
@@ -22,6 +23,9 @@ export default function PanelLayout({
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [isCommandsOpen, setIsCommandsOpen] = useState<boolean>(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
     const handleNew = useCallback(() => {
         setText("");
@@ -125,10 +129,20 @@ export default function PanelLayout({
                 }
             }
 
-            if (e.altKey && e.key.toLowerCase() === 'n') {
-                e.preventDefault();
-                e.stopPropagation();
-                handleNew();
+            if (e.altKey) {
+                if (e.key.toLowerCase() === 'n') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleNew();
+                } else if (e.key.toLowerCase() === 'c') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsCommandsOpen(prev => !prev);
+                } else if (e.key.toLowerCase() === 's') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsSettingsOpen(prev => !prev);
+                }
             }
         };
 
@@ -201,14 +215,20 @@ export default function PanelLayout({
                             </div>
                         </button>
 
-                        <button className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
+                        <button onClick={() => setIsCommandsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
                             <Terminal color="white" size={28} className="mt-2 mb-2" />
-                            <p className="m-2 mr-5 whitespace-nowrap text-white">Commands</p>
+                            <div className="flex flex-col items-start m-2 mr-5">
+                                <p className="whitespace-nowrap text-white">Commands</p>
+                                <span className="text-[10px] text-neutral-400 font-mono">Alt+C</span>
+                            </div>
                         </button>
 
-                        <button className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
+                        <button onClick={() => setIsSettingsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
                             <Cog color="white" size={28} className="mt-2 mb-2" />
-                            <p className="m-2 mr-5 whitespace-nowrap text-white">Settings</p>
+                            <div className="flex flex-col items-start m-2 mr-5">
+                                <p className="whitespace-nowrap text-white">Settings</p>
+                                <span className="text-[10px] text-neutral-400 font-mono">Alt+S</span>
+                            </div>
                         </button>
                     </div>
                 )}
@@ -229,6 +249,14 @@ export default function PanelLayout({
                     {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
                 </div>
             )}
+
+            <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
+                <p>Command palette coming soon...</p>
+            </Modal>
+
+            <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Settings">
+                <p>Settings coming soon...</p>
+            </Modal>
         </div>
     )
 }

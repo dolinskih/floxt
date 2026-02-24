@@ -47,6 +47,7 @@ export default function Home() {
                     text={text} 
                     setText={setText} 
                     viewMode={viewMode}
+                    setViewMode={setViewMode}
                     fontSize={fontSize}
                     showLineNumbers={showLineNumbers}
                 />

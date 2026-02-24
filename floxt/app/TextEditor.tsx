@@ -6,11 +6,12 @@ interface TextEditorProps {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
     viewMode: 'code' | 'read';
+    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read'>>; // Added this
     fontSize: number;
     showLineNumbers: boolean;
 }
 
-export default function TextEditor({ text, setText, viewMode, fontSize, showLineNumbers }: TextEditorProps) {
+export default function TextEditor({ text, setText, viewMode, setViewMode, fontSize, showLineNumbers }: TextEditorProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const preRef = useRef<HTMLDivElement>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -53,6 +54,62 @@ export default function TextEditor({ text, setText, viewMode, fontSize, showLine
             }
             return <span key={i}>{part}</span>;
         });
+    };
+
+    const handleReadViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement;
+        
+        if (target.tagName === 'INPUT' && target.classList.contains('floxt-checkbox')) {
+            const targetIndex = parseInt(target.getAttribute('data-cb-index') || "-1", 10);
+            
+            if (targetIndex > -1) {
+                let currentIdx = 0;
+                const newText = text.replace(/\/\[(x)?\];/gi, (match, checkedState) => {
+                    if (currentIdx === targetIndex) {
+                        currentIdx++;
+                        return checkedState ? '/[];' : '/[x];';
+                    }
+                    currentIdx++;
+                    return match;
+                });
+                setText(newText);
+            }
+            return;
+        }
+
+        if ((e.ctrlKey || e.metaKey) && viewMode === 'read') {
+            e.preventDefault();
+
+            if (target === e.currentTarget) return;
+
+            const searchText = target.textContent?.trim() || "";
+            if (!searchText) return;
+
+            let rawIndex = text.indexOf(searchText);
+
+            if (rawIndex === -1 && searchText.length > 15) {
+                rawIndex = text.indexOf(searchText.substring(0, 15));
+            }
+
+            setViewMode('code');
+
+            setTimeout(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.focus();
+
+                    if (rawIndex !== -1) {
+                        textareaRef.current.setSelectionRange(rawIndex, rawIndex + searchText.length);
+
+                        const linesBefore = text.substring(0, rawIndex).split('\n').length;
+                        const scrollY = Math.max(0, (linesBefore - 4) * (fontSize * 1.5));
+
+                        textareaRef.current.scrollTop = scrollY;
+                        if (preRef.current) preRef.current.scrollTop = scrollY;
+                        if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = scrollY;
+                    }
+                }
+            }, 50);
+        }
     };
 
     const parseFloxt = (rawText: string) => {
@@ -102,13 +159,18 @@ export default function TextEditor({ text, setText, viewMode, fontSize, showLine
 
         } while (parsed !== previous);
 
-        parsed = parsed.replace(/\/\[\];/g, '<input type="checkbox" disabled class="mr-2 w-4 h-4 inline-block align-middle accent-neutral-500" />');
-        parsed = parsed.replace(/\/\[x\];/gi, '<input type="checkbox" checked disabled class="mr-2 w-4 h-4 inline-block align-middle accent-neutral-500" />');
+        let cbIndex = 0;
+        parsed = parsed.replace(/\/\[(x)?\];/gi, (match, checkedState) => {
+            const isChecked = !!checkedState;
+            const html = `<input type="checkbox" ${isChecked ? 'checked' : ''} data-cb-index="${cbIndex}" class="floxt-checkbox mr-2 w-4 h-4 inline-block align-middle accent-neutral-500 cursor-pointer" />`;
+            cbIndex++;
+            return html;
+        });
 
         return parsed;
     };
 
-    const linesCount = text.split('\n').length;
+    const linesCount = (text || "").split('\n').length;
 
     return (
         <div className="w-full flex-1 min-h-[600px] bg-neutral-900 rounded-lg border border-neutral-700 shadow-lg flex flex-col overflow-hidden">
@@ -125,6 +187,7 @@ export default function TextEditor({ text, setText, viewMode, fontSize, showLine
                             ))}
                         </div>
                     )}
+
                     <div className="relative flex-1 overflow-hidden bg-transparent">
                         <div 
                             ref={preRef}
@@ -133,7 +196,7 @@ export default function TextEditor({ text, setText, viewMode, fontSize, showLine
                             aria-hidden="true"
                         >
                             {highlightFloxt(text)}
-                            {text.endsWith('\n') ? <br /> : null}
+                            {(text || "").endsWith('\n') ? <br /> : null}
                         </div>
 
                         <textarea
@@ -151,6 +214,7 @@ export default function TextEditor({ text, setText, viewMode, fontSize, showLine
                 </div>
             ) : (
                 <div 
+                    onClick={handleReadViewClick} 
                     style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}
                     className="w-full h-full p-4 text-gray-200 font-sans overflow-y-auto whitespace-pre-wrap outline-none pr-2"
                     dangerouslySetInnerHTML={{ __html: parseFloxt(text) }}

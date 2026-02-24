@@ -21,6 +21,8 @@ interface PanelLayoutProps {
     setFontSize: React.Dispatch<React.SetStateAction<number>>;
     showLineNumbers: boolean;
     setShowLineNumbers: React.Dispatch<React.SetStateAction<boolean>>;
+    autoSave: boolean;
+    setAutoSave: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const commandsData = [
@@ -35,7 +37,7 @@ const commandsData = [
     { icon: "U", name: "Underline", open: "/u;", close: ";/" },
     { icon: "S", name: "Strike-through", open: "/s;", close: ";/" },
     { icon: "•", name: "Unordered list block", open: "/-;", close: ";/" },
-    { icon: "123", name: "Ordered list block", open: "/0;", close: ";/" },
+    { icon: "1²3", name: "Ordered list block", open: "/0;", close: ";/" },
     { icon: "☐", name: "Unchecked checkbox", open: "/[];", close: "None" },
     { icon: "☑", name: "Checked checkbox", open: "/[x];", close: "None" },
     { icon: "🔗", name: "Hyperlink", open: "/link;url;", close: ";/" },
@@ -43,7 +45,7 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
@@ -51,7 +53,6 @@ export default function PanelLayout({
 
     const [isCommandsOpen, setIsCommandsOpen] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
     const handleNew = useCallback(() => {
@@ -112,6 +113,16 @@ export default function PanelLayout({
         setSavedTitle(fileName);
         setIsFileTracked(true);
     }, [text, title, fileHandle, setSavedText, setSavedTitle, setIsFileTracked, setTitle]);
+
+    useEffect(() => {
+        if (autoSave && isFileTracked && fileHandle && hasUnsavedChanges) {
+            const timeoutId = setTimeout(() => {
+                handleSave();
+            }, 1500); 
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [text, autoSave, isFileTracked, fileHandle, hasUnsavedChanges, handleSave]);
 
     const handleOpenClick = useCallback(async () => {
         try {
@@ -214,7 +225,7 @@ export default function PanelLayout({
     };
 
     return (
-        <div className="flex flex-col gap-2 w-fit h-fit items-center">
+        <div className="flex flex-col gap-2 w-fit h-fit items-center z-50">
             <section className={`p-3 h-fit bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-700 rounded-lg`}>
 
                 <input
@@ -304,6 +315,7 @@ export default function PanelLayout({
                 </div>
             )}
 
+            {/* COMMANDS MODAL */}
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
                 <div className="max-h-[60vh] overflow-y-auto pr-2">
                     <div className="flex flex-col gap-1 w-full">
@@ -337,20 +349,22 @@ export default function PanelLayout({
                 </div>
             </Modal>
 
+            {/* SETTINGS MODAL */}
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Settings">
                 <div className="flex flex-col gap-6 p-2">
+
                     <div className="flex items-center justify-between">
                         <span className="text-gray-200">Editor Font Size</span>
                         <div className="flex items-center gap-4 bg-neutral-950 px-3 py-1.5 rounded border border-neutral-800">
-                            <button 
-                                onClick={() => setFontSize(f => Math.max(10, f - 1))} 
+                            <button
+                                onClick={() => setFontSize(f => Math.max(10, f - 1))}
                                 className="text-neutral-400 hover:text-white cursor-pointer active:scale-95"
                             >
                                 -
                             </button>
                             <span className="text-yellow-500 font-mono w-6 text-center">{fontSize}</span>
-                            <button 
-                                onClick={() => setFontSize(f => Math.min(24, f + 1))} 
+                            <button
+                                onClick={() => setFontSize(f => Math.min(24, f + 1))}
                                 className="text-neutral-400 hover:text-white cursor-pointer active:scale-95"
                             >
                                 +
@@ -360,11 +374,24 @@ export default function PanelLayout({
 
                     <div className="flex items-center justify-between">
                         <span className="text-gray-200">Show Line Numbers</span>
-                        <button 
+                        <button
                             onClick={() => setShowLineNumbers(!showLineNumbers)}
                             className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showLineNumbers ? 'bg-emerald-500' : 'bg-neutral-700'}`}
                         >
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showLineNumbers ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-gray-200">Auto Save</span>
+                            <span className="text-[10px] text-neutral-500">Only works for opened files</span>
+                        </div>
+                        <button
+                            onClick={() => setAutoSave(!autoSave)}
+                            className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${autoSave ? 'bg-emerald-500' : 'bg-neutral-700'}`}
+                        >
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${autoSave ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
 

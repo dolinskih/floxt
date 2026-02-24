@@ -1,9 +1,10 @@
 "use client";
 
 import "./panel.css";
-import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen } from 'lucide-react';
+import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
+import ExportModal from "./ExportModal"; 
 
 interface PanelLayoutProps {
     text: string;
@@ -53,6 +54,7 @@ export default function PanelLayout({
 
     const [isCommandsOpen, setIsCommandsOpen] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+    const [isExportOpen, setIsExportOpen] = useState<boolean>(false); // New state
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
     const handleNew = useCallback(() => {
@@ -118,8 +120,7 @@ export default function PanelLayout({
         if (autoSave && isFileTracked && fileHandle && hasUnsavedChanges) {
             const timeoutId = setTimeout(() => {
                 handleSave();
-            }, 1500); 
-
+            }, 1500);
             return () => clearTimeout(timeoutId);
         }
     }, [text, autoSave, isFileTracked, fileHandle, hasUnsavedChanges, handleSave]);
@@ -190,6 +191,10 @@ export default function PanelLayout({
                     e.preventDefault();
                     e.stopPropagation();
                     setIsSettingsOpen(prev => !prev);
+                } else if (e.key.toLowerCase() === 'e') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsExportOpen(prev => !prev);
                 }
             }
         };
@@ -263,6 +268,14 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        <button onClick={() => setIsExportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
+                            <Download color="white" size={28} className="mt-2 mb-2" />
+                            <div className="flex flex-col items-start m-2 mr-5">
+                                <p className="whitespace-nowrap text-white">Export</p>
+                                <span className="text-[10px] text-neutral-400 font-mono">Alt+E</span>
+                            </div>
+                        </button>
+
                         <button onClick={() => setIsCommandsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer"}>
                             <Terminal color="white" size={28} className="mt-2 mb-2" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -315,7 +328,13 @@ export default function PanelLayout({
                 </div>
             )}
 
-            {/* COMMANDS MODAL */}
+            <ExportModal
+                isOpen={isExportOpen}
+                onClose={() => setIsExportOpen(false)}
+                text={text}
+                title={title}
+            />
+
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
                 <div className="max-h-[60vh] overflow-y-auto pr-2">
                     <div className="flex flex-col gap-1 w-full">
@@ -349,10 +368,8 @@ export default function PanelLayout({
                 </div>
             </Modal>
 
-            {/* SETTINGS MODAL */}
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Settings">
                 <div className="flex flex-col gap-6 p-2">
-
                     <div className="flex items-center justify-between">
                         <span className="text-gray-200">Editor Font Size</span>
                         <div className="flex items-center gap-4 bg-neutral-950 px-3 py-1.5 rounded border border-neutral-800">
@@ -371,7 +388,6 @@ export default function PanelLayout({
                             </button>
                         </div>
                     </div>
-
                     <div className="flex items-center justify-between">
                         <span className="text-gray-200">Show Line Numbers</span>
                         <button
@@ -381,7 +397,6 @@ export default function PanelLayout({
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showLineNumbers ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
-
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                             <span className="text-gray-200">Auto Save</span>
@@ -394,7 +409,6 @@ export default function PanelLayout({
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${autoSave ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
-
                 </div>
             </Modal>
         </div>

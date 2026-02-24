@@ -8,7 +8,6 @@ import NoteTitle from "./NoteTitle";
 export default function Home() {
     const [text, setText] = useState<string>("");
     const [title, setTitle] = useState<string>("");
-    
     const [savedText, setSavedText] = useState<string>("");
     const [savedTitle, setSavedTitle] = useState<string>("");
     
@@ -17,7 +16,6 @@ export default function Home() {
 
     const [fontSize, setFontSize] = useState<number>(14);
     const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
-    
     const [autoSave, setAutoSave] = useState<boolean>(false);
 
     const hasUnsavedChanges = text !== savedText || title !== savedTitle;

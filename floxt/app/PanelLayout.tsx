@@ -1,7 +1,7 @@
 "use client";
 
 import "./panel.css";
-import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download } from 'lucide-react';
+import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 import ExportModal from "./ExportModal"; 
@@ -55,8 +55,33 @@ export default function PanelLayout({
 
     const [isCommandsOpen, setIsCommandsOpen] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-    const [isExportOpen, setIsExportOpen] = useState<boolean>(false); // New state
+    const [isExportOpen, setIsExportOpen] = useState<boolean>(false); 
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        const promptEvent = deferredPrompt as any;
+        promptEvent.prompt();
+        
+        const { outcome } = await promptEvent.userChoice;
+        if (outcome === 'accepted') {
+            setDeferredPrompt(null);
+        }
+    };
 
     const handleNew = useCallback(() => {
         setText("");
@@ -292,6 +317,20 @@ export default function PanelLayout({
                                 <span className="text-[10px] text-neutral-400 font-mono">Alt+S</span>
                             </div>
                         </button>
+
+                        {deferredPrompt && (
+                            <button 
+                                onClick={handleInstallClick} 
+                                className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer mt-2 pt-2 border-t border-neutral-800"}
+                            >
+                                <DownloadCloud color="white" size={28} className="mt-2 mb-2" />
+                                <div className="flex flex-col items-start m-2 mr-5">
+                                    <p className="whitespace-nowrap text-white">Install</p>
+                                    <span className="text-[10px] text-neutral-400 font-mono whitespace-nowrap">Work offline with faster speed</span>
+                                </div>
+                            </button>
+                        )}
+                        
                     </div>
                 )}
 

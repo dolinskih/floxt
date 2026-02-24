@@ -43,6 +43,7 @@ const commandsData = [
     { icon: "☑", name: "Checked checkbox", open: "/[x];", close: "None" },
     { icon: "🔗", name: "Hyperlink", open: "/link;url;", close: ";/" },
     { icon: "</>", name: "Code block", open: "/code;", close: ";/" },
+    { icon: "⊞", name: "Table", open: "/table;", close: ";/" },
 ];
 
 export default function PanelLayout({

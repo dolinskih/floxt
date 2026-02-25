@@ -4,7 +4,7 @@ import "./panel.css";
 import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
-import ExportModal from "./ExportModal"; 
+import ExportModal from "./ExportModal";
 
 interface PanelLayoutProps {
     text: string;
@@ -43,8 +43,8 @@ const commandsData = [
     { icon: "☑", name: "Checked checkbox", open: "/[x];", close: "None" },
     { icon: "🔗", name: "Hyperlink", open: "/link;url;", close: ";/" },
     { icon: "</>", name: "Code block", open: "/code;", close: ";/" },
-    { icon: "⊞", name: "Table", open: "/table;", close: ";/" },
-    { icon: "🖼️", name: "Image", open: "/img;url;", close: ";/" },
+    { icon: "🖼️", name: "Image Embed", open: "/img;url;", close: ";/" },
+    { icon: "⊞", name: "Table", open: "/table;", close: ";/" }
 ];
 
 export default function PanelLayout({
@@ -56,8 +56,9 @@ export default function PanelLayout({
 
     const [isCommandsOpen, setIsCommandsOpen] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-    const [isExportOpen, setIsExportOpen] = useState<boolean>(false); 
+    const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
+
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
     useEffect(() => {
@@ -65,19 +66,14 @@ export default function PanelLayout({
             e.preventDefault();
             setDeferredPrompt(e);
         };
-
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        };
+        return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
 
     const handleInstallClick = async () => {
         if (!deferredPrompt) return;
         const promptEvent = deferredPrompt as any;
         promptEvent.prompt();
-        
         const { outcome } = await promptEvent.userChoice;
         if (outcome === 'accepted') {
             setDeferredPrompt(null);
@@ -99,18 +95,13 @@ export default function PanelLayout({
         try {
             if ('showSaveFilePicker' in window) {
                 let handle = fileHandle;
-
                 if (!handle) {
                     handle = await (window as any).showSaveFilePicker({
                         suggestedName: `${fileName}.floxt`,
-                        types: [{
-                            description: 'Floxt File',
-                            accept: { 'text/plain': ['.floxt'] },
-                        }],
+                        types: [{ description: 'Floxt File', accept: { 'text/plain': ['.floxt'] } }],
                     });
                     setFileHandle(handle);
                 }
-
                 const writable = await handle.createWritable();
                 await writable.write(text);
                 await writable.close();
@@ -128,13 +119,11 @@ export default function PanelLayout({
 
         const blob = new Blob([text], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement("a");
         a.href = url;
         a.download = `${fileName}.floxt`;
         document.body.appendChild(a);
         a.click();
-
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
@@ -156,14 +145,10 @@ export default function PanelLayout({
         try {
             if ('showOpenFilePicker' in window) {
                 const [handle] = await (window as any).showOpenFilePicker({
-                    types: [{
-                        description: 'Floxt File',
-                        accept: { 'text/plain': ['.floxt'] },
-                    }],
+                    types: [{ description: 'Floxt File', accept: { 'text/plain': ['.floxt'] } }],
                 });
                 const file = await handle.getFile();
                 const fileContent = await file.text();
-
                 const fileNameWithoutExt = file.name.replace(/\.floxt$/i, "");
 
                 setText(fileContent);
@@ -177,7 +162,6 @@ export default function PanelLayout({
         } catch (err: any) {
             if (err.name === 'AbortError') return;
         }
-
         fileInputRef.current?.click();
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
@@ -185,10 +169,7 @@ export default function PanelLayout({
         if (textToCopy === 'None') return;
         navigator.clipboard.writeText(textToCopy);
         setCopiedCommand(id);
-
-        setTimeout(() => {
-            setCopiedCommand(null);
-        }, 2000);
+        setTimeout(() => setCopiedCommand(null), 2000);
     };
 
     useEffect(() => {
@@ -222,23 +203,27 @@ export default function PanelLayout({
                     e.preventDefault();
                     e.stopPropagation();
                     setIsExportOpen(prev => !prev);
+                } else if (e.key === '1') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setViewMode('code');
+                } else if (e.key === '2') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setViewMode('read');
                 }
             }
         };
 
         window.addEventListener('keydown', handleKeyDown, { capture: true });
-
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown, { capture: true });
-        };
-    }, [handleNew, handleSave, handleOpenClick]);
+        return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
+    }, [handleNew, handleSave, handleOpenClick, setViewMode]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         const fileNameWithoutExt = file.name.replace(/\.floxt$/i, "");
-
         const reader = new FileReader();
         reader.onload = (event: ProgressEvent<FileReader>) => {
             if (event.target?.result) {
@@ -252,7 +237,6 @@ export default function PanelLayout({
             }
         };
         reader.readAsText(file);
-
         e.target.value = "";
     };
 
@@ -260,13 +244,7 @@ export default function PanelLayout({
         <div className="flex flex-col gap-2 w-fit h-fit items-center z-50">
             <section className={`p-3 h-fit bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-700 rounded-lg`}>
 
-                <input
-                    type="file"
-                    accept=".floxt"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    style={{ display: "none" }}
-                />
+                <input type="file" accept=".floxt" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />
 
                 {isOpen && (
                     <div className={`overflow-hidden transition-all duration-150 ease-in-out flex flex-col ${isOpen ? 'max-h-[500px] max-w-[300px] opacity-100' : 'max-h-0 max-w-0 opacity-0'}`}>
@@ -320,10 +298,7 @@ export default function PanelLayout({
                         </button>
 
                         {deferredPrompt && (
-                            <button 
-                                onClick={handleInstallClick} 
-                                className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer mt-2 pt-2 border-t border-neutral-800"}
-                            >
+                            <button onClick={handleInstallClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer mt-2 pt-2 border-t border-neutral-800"}>
                                 <DownloadCloud color="white" size={28} className="mt-2 mb-2" />
                                 <div className="flex flex-col items-start m-2 mr-5">
                                     <p className="whitespace-nowrap text-white">Install</p>
@@ -331,35 +306,42 @@ export default function PanelLayout({
                                 </div>
                             </button>
                         )}
-                        
                     </div>
                 )}
 
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className={`flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-all duration-150 ease-in-out cursor-pointer ${isOpen ? 'mt-5' : 'w-full justify-center'}`}>
-                    {isOpen ? (
-                        <ChevronUp color="white" size={28} className="mt-2 mb-2" />
-                    ) : (
-                        <ChevronDown color="white" size={28} className="mt-2 mb-2" />
-                    )}
+                    {isOpen ? <ChevronUp color="white" size={28} className="mt-2 mb-2" /> : <ChevronDown color="white" size={28} className="mt-2 mb-2" />}
                 </button>
             </section>
 
-            <div className={`flex items-center justify-center gap-2 p-1.5 transition-all duration-150 bg-neutral-900 border border-neutral-700 rounded-xl ${isOpen ? 'w-full' : 'w-fit'}`}>
+            <div className={`flex flex-col gap-2 p-1.5 transition-all duration-150 bg-neutral-900 border border-neutral-700 rounded-xl ${isOpen ? 'w-full' : 'w-fit'}`}>
                 <button
                     onClick={() => setViewMode('code')}
-                    className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'code' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
+                    title="Alt+1"
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'code' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
                 >
                     <Terminal size={isOpen ? 18 : 22} />
-                    {isOpen && <span className="text-sm font-mono whitespace-nowrap">Code view</span>}
+                    {isOpen && (
+                        <div className="flex flex-col items-start">
+                            <span className="text-sm font-mono whitespace-nowrap leading-tight">Code view</span>
+                            <span className="text-[9px] text-neutral-500 font-mono">Alt+1</span>
+                        </div>
+                    )}
                 </button>
                 <button
                     onClick={() => setViewMode('read')}
-                    className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
+                    title="Alt+2"
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
                 >
                     <BookOpen size={isOpen ? 18 : 22} />
-                    {isOpen && <span className="text-sm font-mono whitespace-nowrap">Read view</span>}
+                    {isOpen && (
+                        <div className="flex flex-col items-start">
+                            <span className="text-sm font-mono whitespace-nowrap leading-tight">Read view</span>
+                            <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>
+                        </div>
+                    )}
                 </button>
             </div>
 
@@ -369,12 +351,7 @@ export default function PanelLayout({
                 </div>
             )}
 
-            <ExportModal
-                isOpen={isExportOpen}
-                onClose={() => setIsExportOpen(false)}
-                text={text}
-                title={title}
-            />
+            <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} text={text} title={title} />
 
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
                 <div className="max-h-[60vh] overflow-y-auto pr-2">
@@ -391,18 +368,8 @@ export default function PanelLayout({
                                     {cmd.icon === 'S' ? <s className="decoration-2">{cmd.icon}</s> : cmd.icon === 'U' ? <u className="underline-offset-2 decoration-2">{cmd.icon}</u> : cmd.icon === 'I' ? <i className="font-serif">{cmd.icon}</i> : cmd.icon}
                                 </span>
                                 <span className="text-gray-300 truncate">{cmd.name}</span>
-                                <code
-                                    onClick={() => handleCopy(cmd.open, `${idx}-open`)}
-                                    className={`px-1 py-0.5 rounded text-center border text-xs cursor-pointer transition-colors ${copiedCommand === `${idx}-open` ? 'text-emerald-400 bg-emerald-950/50 border-emerald-500' : 'text-yellow-500 bg-neutral-950 border-neutral-800 hover:border-yellow-600/50 hover:bg-neutral-900'}`}
-                                >
-                                    {cmd.open}
-                                </code>
-                                <code
-                                    onClick={() => handleCopy(cmd.close, `${idx}-close`)}
-                                    className={`px-1 py-0.5 rounded text-center border text-xs ${cmd.close === 'None' ? 'text-neutral-500 bg-transparent border-transparent' : `cursor-pointer transition-colors ${copiedCommand === `${idx}-close` ? 'text-emerald-400 bg-emerald-950/50 border-emerald-500' : 'text-yellow-500 bg-neutral-950 border-neutral-800 hover:border-yellow-600/50 hover:bg-neutral-900'}`}`}
-                                >
-                                    {cmd.close}
-                                </code>
+                                <code onClick={() => handleCopy(cmd.open, `${idx}-open`)} className={`px-1 py-0.5 rounded text-center border text-xs cursor-pointer transition-colors ${copiedCommand === `${idx}-open` ? 'text-emerald-400 bg-emerald-950/50 border-emerald-500' : 'text-yellow-500 bg-neutral-950 border-neutral-800 hover:border-yellow-600/50 hover:bg-neutral-900'}`}>{cmd.open}</code>
+                                <code onClick={() => handleCopy(cmd.close, `${idx}-close`)} className={`px-1 py-0.5 rounded text-center border text-xs ${cmd.close === 'None' ? 'text-neutral-500 bg-transparent border-transparent' : `cursor-pointer transition-colors ${copiedCommand === `${idx}-close` ? 'text-emerald-400 bg-emerald-950/50 border-emerald-500' : 'text-yellow-500 bg-neutral-950 border-neutral-800 hover:border-yellow-600/50 hover:bg-neutral-900'}`}`}>{cmd.close}</code>
                             </div>
                         ))}
                     </div>
@@ -414,27 +381,14 @@ export default function PanelLayout({
                     <div className="flex items-center justify-between">
                         <span className="text-gray-200">Editor Font Size</span>
                         <div className="flex items-center gap-4 bg-neutral-950 px-3 py-1.5 rounded border border-neutral-800">
-                            <button
-                                onClick={() => setFontSize(f => Math.max(10, f - 1))}
-                                className="text-neutral-400 hover:text-white cursor-pointer active:scale-95"
-                            >
-                                -
-                            </button>
+                            <button onClick={() => setFontSize(f => Math.max(10, f - 1))} className="text-neutral-400 hover:text-white cursor-pointer active:scale-95">-</button>
                             <span className="text-yellow-500 font-mono w-6 text-center">{fontSize}</span>
-                            <button
-                                onClick={() => setFontSize(f => Math.min(24, f + 1))}
-                                className="text-neutral-400 hover:text-white cursor-pointer active:scale-95"
-                            >
-                                +
-                            </button>
+                            <button onClick={() => setFontSize(f => Math.min(24, f + 1))} className="text-neutral-400 hover:text-white cursor-pointer active:scale-95">+</button>
                         </div>
                     </div>
                     <div className="flex items-center justify-between">
                         <span className="text-gray-200">Show Line Numbers</span>
-                        <button
-                            onClick={() => setShowLineNumbers(!showLineNumbers)}
-                            className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showLineNumbers ? 'bg-emerald-500' : 'bg-neutral-700'}`}
-                        >
+                        <button onClick={() => setShowLineNumbers(!showLineNumbers)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showLineNumbers ? 'bg-emerald-500' : 'bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showLineNumbers ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
@@ -443,10 +397,7 @@ export default function PanelLayout({
                             <span className="text-gray-200">Auto Save</span>
                             <span className="text-[10px] text-neutral-500">Only works for opened files</span>
                         </div>
-                        <button
-                            onClick={() => setAutoSave(!autoSave)}
-                            className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${autoSave ? 'bg-emerald-500' : 'bg-neutral-700'}`}
-                        >
+                        <button onClick={() => setAutoSave(!autoSave)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${autoSave ? 'bg-emerald-500' : 'bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${autoSave ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>

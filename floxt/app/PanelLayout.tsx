@@ -24,6 +24,8 @@ interface PanelLayoutProps {
     setShowLineNumbers: React.Dispatch<React.SetStateAction<boolean>>;
     autoSave: boolean;
     setAutoSave: React.Dispatch<React.SetStateAction<boolean>>;
+    showShortcuts: boolean;
+    setShowShortcuts: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const commandsData = [
@@ -48,7 +50,7 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
@@ -253,7 +255,7 @@ export default function PanelLayout({
                             <Plus color="white" size={28} className="mt-2 mb-2" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-white">New</p>
-                                <span className="text-[10px] text-neutral-400 font-mono">Alt+N</span>
+                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+N</span>}
                             </div>
                         </button>
 
@@ -261,7 +263,7 @@ export default function PanelLayout({
                             <Save color="white" size={28} className="mt-2 mb-2" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-white">Save</p>
-                                <span className="text-[10px] text-neutral-400 font-mono">Ctrl+S</span>
+                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Ctrl+S</span>}
                             </div>
                         </button>
 
@@ -269,7 +271,7 @@ export default function PanelLayout({
                             <FolderOpen color="white" size={28} className="mt-2 mb-2" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-white">Open</p>
-                                <span className="text-[10px] text-neutral-400 font-mono">Ctrl+O</span>
+                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Ctrl+O</span>}
                             </div>
                         </button>
 
@@ -277,7 +279,7 @@ export default function PanelLayout({
                             <Download color="white" size={28} className="mt-2 mb-2" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-white">Export</p>
-                                <span className="text-[10px] text-neutral-400 font-mono">Alt+E</span>
+                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+E</span>}
                             </div>
                         </button>
 
@@ -285,7 +287,7 @@ export default function PanelLayout({
                             <Terminal color="white" size={28} className="mt-2 mb-2" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-white">Commands</p>
-                                <span className="text-[10px] text-neutral-400 font-mono">Alt+C</span>
+                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+C</span>}
                             </div>
                         </button>
 
@@ -293,7 +295,7 @@ export default function PanelLayout({
                             <Cog color="white" size={28} className="mt-2 mb-2" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-white">Settings</p>
-                                <span className="text-[10px] text-neutral-400 font-mono">Alt+S</span>
+                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+S</span>}
                             </div>
                         </button>
 
@@ -326,7 +328,7 @@ export default function PanelLayout({
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Code view</span>
-                            <span className="text-[9px] text-neutral-500 font-mono">Alt+1</span>
+                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+1</span>}
                         </div>
                     )}
                 </button>
@@ -339,7 +341,7 @@ export default function PanelLayout({
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Read view</span>
-                            <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>
+                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>}
                         </div>
                     )}
                 </button>
@@ -399,6 +401,14 @@ export default function PanelLayout({
                         </div>
                         <button onClick={() => setAutoSave(!autoSave)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${autoSave ? 'bg-emerald-500' : 'bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${autoSave ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-gray-200">Show Keyboard Shortcuts</span>
+                        </div>
+                        <button onClick={() => setShowShortcuts(!showShortcuts)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showShortcuts ? 'bg-emerald-500' : 'bg-neutral-700'}`}>
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showShortcuts ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PanelLayout from "./PanelLayout";
 import TextEditor from "./TextEditor";
 import NoteTitle from "./NoteTitle";
@@ -17,8 +17,34 @@ export default function Home() {
     const [fontSize, setFontSize] = useState<number>(14);
     const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(false);
-
     const [showShortcuts, setShowShortcuts] = useState<boolean>(true);
+
+    const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+    useEffect(() => {
+        const savedFontSize = localStorage.getItem('floxt_fontSize');
+        if (savedFontSize) setFontSize(parseInt(savedFontSize, 10));
+
+        const savedLineNumbers = localStorage.getItem('floxt_showLineNumbers');
+        if (savedLineNumbers !== null) setShowLineNumbers(savedLineNumbers === 'true');
+
+        const savedAutoSave = localStorage.getItem('floxt_autoSave');
+        if (savedAutoSave !== null) setAutoSave(savedAutoSave === 'true');
+
+        const savedShortcuts = localStorage.getItem('floxt_showShortcuts');
+        if (savedShortcuts !== null) setShowShortcuts(savedShortcuts === 'true');
+
+        setIsLoaded(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isLoaded) return;
+
+        localStorage.setItem('floxt_fontSize', fontSize.toString());
+        localStorage.setItem('floxt_showLineNumbers', showLineNumbers.toString());
+        localStorage.setItem('floxt_autoSave', autoSave.toString());
+        localStorage.setItem('floxt_showShortcuts', showShortcuts.toString());
+    }, [fontSize, showLineNumbers, autoSave, showShortcuts, isLoaded]);
 
     const hasUnsavedChanges = text !== savedText || title !== savedTitle;
 

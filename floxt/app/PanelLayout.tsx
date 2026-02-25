@@ -28,6 +28,8 @@ interface PanelLayoutProps {
     setShowShortcuts: React.Dispatch<React.SetStateAction<boolean>>;
     theme: 'light' | 'dark' | 'system';
     setTheme: React.Dispatch<React.SetStateAction<'light' | 'dark' | 'system'>>;
+    panelPosition: 'left' | 'right';
+    setPanelPosition: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
 }
 
 const commandsData = [
@@ -52,7 +54,7 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
@@ -411,6 +413,17 @@ export default function PanelLayout({
                         </div>
                         <button onClick={() => setShowShortcuts(!showShortcuts)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showShortcuts ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showShortcuts ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-neutral-900 dark:text-gray-200">Pin Panel to Right</span>
+                        </div>
+                        <button
+                            onClick={() => setPanelPosition(prev => prev === 'left' ? 'right' : 'left')}
+                            className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${panelPosition === 'right' ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}
+                        >
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${panelPosition === 'right' ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
                     <div className="flex items-center justify-between">

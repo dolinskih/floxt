@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${cascadiaCode.variable} antialiased`}
+        className={`${cascadiaCode.variable} bg-transparent text-neutral-900 dark:text-white`}
       >
         {children}
       </body>

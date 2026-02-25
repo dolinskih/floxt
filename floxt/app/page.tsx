@@ -19,6 +19,7 @@ export default function Home() {
     const [autoSave, setAutoSave] = useState<boolean>(false);
     const [showShortcuts, setShowShortcuts] = useState<boolean>(true);
 
+    const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
     useEffect(() => {
@@ -34,6 +35,9 @@ export default function Home() {
         const savedShortcuts = localStorage.getItem('floxt_showShortcuts');
         if (savedShortcuts !== null) setShowShortcuts(savedShortcuts === 'true');
 
+        const savedTheme = localStorage.getItem('floxt_theme') as 'light' | 'dark' | 'system';
+        if (savedTheme) setTheme(savedTheme);
+
         setIsLoaded(true);
     }, []);
 
@@ -44,16 +48,43 @@ export default function Home() {
         localStorage.setItem('floxt_showLineNumbers', showLineNumbers.toString());
         localStorage.setItem('floxt_autoSave', autoSave.toString());
         localStorage.setItem('floxt_showShortcuts', showShortcuts.toString());
-    }, [fontSize, showLineNumbers, autoSave, showShortcuts, isLoaded]);
+        localStorage.setItem('floxt_theme', theme);
+    }, [fontSize, showLineNumbers, autoSave, showShortcuts, theme, isLoaded]);
+
+    useEffect(() => {
+        const root = window.document.documentElement;
+
+        const applyTheme = () => {
+            if (theme === 'system') {
+                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (systemPrefersDark) root.classList.add('dark');
+                else root.classList.remove('dark');
+            } else if (theme === 'dark') {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
+        };
+
+        applyTheme();
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = () => {
+            if (theme === 'system') applyTheme();
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    }, [theme]);
 
     const hasUnsavedChanges = text !== savedText || title !== savedTitle;
 
     return (
-        <main className="flex w-full min-h-screen p-4 gap-6 bg-neutral-950">
-            <PanelLayout
-                text={text}
-                setText={setText}
-                title={title}
+        <main className = "flex w-full min-h-screen p-4 gap-6 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200">
+            <PanelLayout 
+                text={text} 
+                setText={setText} 
+                title={title} 
                 setTitle={setTitle}
                 setSavedText={setSavedText}
                 setSavedTitle={setSavedTitle}
@@ -70,18 +101,20 @@ export default function Home() {
                 setAutoSave={setAutoSave}
                 showShortcuts={showShortcuts}
                 setShowShortcuts={setShowShortcuts}
+                theme={theme}
+                setTheme={setTheme}
             />
             <div className="flex-1 flex flex-col">
                 <NoteTitle title={title} setTitle={setTitle} />
-                <TextEditor
-                    text={text}
-                    setText={setText}
+                <TextEditor 
+                    text={text} 
+                    setText={setText} 
                     viewMode={viewMode}
                     setViewMode={setViewMode}
                     fontSize={fontSize}
                     showLineNumbers={showLineNumbers}
                 />
             </div>
-        </main>
+        </main >
     );
 }

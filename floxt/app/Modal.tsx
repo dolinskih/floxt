@@ -25,12 +25,12 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-neutral-900 border border-neutral-700 rounded-lg shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between p-4 border-b border-neutral-700">
-                    <h2 className="text-gray-200 font-mono font-bold text-lg">{title}</h2>
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b border-neutral-300 dark:border-neutral-700">
+                    <h2 className="text-neutral-900 dark:text-white font-mono font-bold text-lg">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                        className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
                     >
                         <X size={24} />
                     </button>

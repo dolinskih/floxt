@@ -320,7 +320,7 @@ export default function PanelLayout({
                 </button>
             </section>
 
-            <div className={`flex flex-col gap-2 p-1.5 transition-all duration-150 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl ${isOpen ? 'w-full' : 'w-fit'}`}>
+            <div className={`flex gap-2 p-1.5 transition-all duration-150 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl ${isOpen ? 'w-full flex-row' : 'w-fit flex-col'}`}>
                 <button
                     onClick={() => setViewMode('code')}
                     title="Alt+1"

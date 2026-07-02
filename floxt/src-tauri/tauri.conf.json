@@ -35,6 +35,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "installer/header_floxt.bmp",
+        "sidebarImage": "installer/sidebar_floxt.bmp"
+      }
+    },
     "fileAssociations": [
       {
         "ext": ["floxt"],

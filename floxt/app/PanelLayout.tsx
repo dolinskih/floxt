@@ -5,6 +5,7 @@ import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 import ExportModal from "./ExportModal";
+import { invoke } from '@tauri-apps/api/core';
 
 interface PanelLayoutProps {
     text: string;
@@ -30,6 +31,8 @@ interface PanelLayoutProps {
     setTheme: React.Dispatch<React.SetStateAction<'light' | 'dark' | 'system'>>;
     panelPosition: 'left' | 'right';
     setPanelPosition: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
+    filePath: string | null;
+    setFilePath: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const commandsData = [
@@ -54,7 +57,7 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition, filePath, setFilePath
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
@@ -96,56 +99,66 @@ export default function PanelLayout({
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
     const handleSave = useCallback(async () => {
-        const fileName = title.trim() === "" ? "Untitled" : title;
-
-        try {
-            if ('showSaveFilePicker' in window) {
-                let handle = fileHandle;
-                if (!handle) {
-                    handle = await (window as any).showSaveFilePicker({
-                        suggestedName: `${fileName}.floxt`,
-                        types: [{ description: 'Floxt File', accept: { 'text/plain': ['.floxt'] } }],
-                    });
-                    setFileHandle(handle);
-                }
-                const writable = await handle.createWritable();
-                await writable.write(text);
-                await writable.close();
-
-                const actualFileName = handle.name.replace(/\.floxt$/i, "");
+        if (filePath) {
+            try {
+                await invoke('save_document', { path: filePath, content: text });
                 setSavedText(text);
-                setSavedTitle(actualFileName);
-                setTitle(actualFileName);
-                setIsFileTracked(true);
-                return;
+                setSavedTitle(title);
+            } catch (error) {
+                console.error("Failed to save:", error);
             }
-        } catch (err: any) {
-            if (err.name === 'AbortError') return;
+        } else {
+            const fileName = title.trim() === "" ? "Untitled" : title;
+
+            try {
+                if ('showSaveFilePicker' in window) {
+                    let handle = fileHandle;
+                    if (!handle) {
+                        handle = await (window as any).showSaveFilePicker({
+                            suggestedName: `${fileName}.floxt`,
+                            types: [{ description: 'Floxt File', accept: { 'text/plain': ['.floxt'] } }],
+                        });
+                        setFileHandle(handle);
+                    }
+                    const writable = await handle.createWritable();
+                    await writable.write(text);
+                    await writable.close();
+
+                    const actualFileName = handle.name.replace(/\.floxt$/i, "");
+                    setSavedText(text);
+                    setSavedTitle(actualFileName);
+                    setTitle(actualFileName);
+                    setIsFileTracked(true);
+                    return;
+                }
+            } catch (err: any) {
+                if (err.name === 'AbortError') return;
+            }
+
+            const blob = new Blob([text], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${fileName}.floxt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            setSavedText(text);
+            setSavedTitle(fileName);
+            setIsFileTracked(true);
         }
-
-        const blob = new Blob([text], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${fileName}.floxt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        setSavedText(text);
-        setSavedTitle(fileName);
-        setIsFileTracked(true);
-    }, [text, title, fileHandle, setSavedText, setSavedTitle, setIsFileTracked, setTitle]);
+    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle]);
 
     useEffect(() => {
-        if (autoSave && isFileTracked && fileHandle && hasUnsavedChanges) {
+        if (autoSave && isFileTracked && (fileHandle || filePath) && hasUnsavedChanges) {
             const timeoutId = setTimeout(() => {
                 handleSave();
             }, 1500);
             return () => clearTimeout(timeoutId);
         }
-    }, [text, autoSave, isFileTracked, fileHandle, hasUnsavedChanges, handleSave]);
+    }, [text, autoSave, isFileTracked, fileHandle, filePath, hasUnsavedChanges, handleSave]);
 
     const handleOpenClick = useCallback(async () => {
         try {

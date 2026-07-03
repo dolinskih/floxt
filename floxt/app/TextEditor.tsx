@@ -5,8 +5,8 @@ import React, { useRef } from "react";
 interface TextEditorProps {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
-    viewMode: 'code' | 'read';
-    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read'>>;
+    viewMode: 'code' | 'read' | 'split';
+    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read' | 'split'>>;
     fontSize: number;
     showLineNumbers: boolean;
 }
@@ -198,54 +198,58 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
 
     return (
         <div className="w-full flex-1 min-h-[600px] bg-white dark:bg-neutral-900 rounded-lg border border-neutral-300 dark:border-neutral-700 shadow-sm dark:shadow-lg flex flex-col overflow-hidden relative transition-colors duration-200">
-            {viewMode === 'code' ? (
-                <div className="flex flex-1 overflow-hidden">
-                    {showLineNumbers && (
-                        <div
-                            ref={lineNumbersRef}
-                            style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-                            className="w-12 flex-none bg-neutral-50 dark:bg-neutral-900/50 border-r border-neutral-300 dark:border-neutral-800 text-neutral-400 dark:text-neutral-500 font-mono text-right pr-3 py-4 overflow-hidden select-none pb-12 transition-colors duration-200"
-                        >
-                            {Array.from({ length: linesCount }).map((_, i) => (
-                                <div key={i}>{i + 1}</div>
-                            ))}
-                        </div>
-                    )}
+            <div className="flex flex-1 w-full overflow-hidden">
+                {(viewMode === 'code' || viewMode === 'split') && (
+                    <div className={`flex flex-1 overflow-hidden ${viewMode === 'split' ? 'border-r border-neutral-300 dark:border-neutral-700' : ''}`}>
+                        {showLineNumbers && (
+                            <div
+                                ref={lineNumbersRef}
+                                style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
+                                className="w-12 flex-none bg-neutral-50 dark:bg-neutral-900/50 border-r border-neutral-300 dark:border-neutral-800 text-neutral-400 dark:text-neutral-500 font-mono text-right pr-3 py-4 overflow-hidden select-none pb-4 transition-colors duration-200"
+                            >
+                                {Array.from({ length: linesCount }).map((_, i) => (
+                                    <div key={i}>{i + 1}</div>
+                                ))}
+                            </div>
+                        )}
 
-                    <div className="relative flex-1 overflow-hidden bg-transparent">
-                        <div
-                            ref={preRef}
-                            style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-                            className="absolute inset-0 px-4 py-4 pb-12 font-mono text-neutral-900 dark:text-gray-200 whitespace-pre pointer-events-none overflow-hidden"
-                            aria-hidden="true"
-                        >
-                            {highlightFloxt(text)}
-                            {safeText.endsWith('\n') ? <br /> : null}
-                        </div>
+                        <div className="relative flex-1 overflow-hidden bg-transparent">
+                            <div
+                                ref={preRef}
+                                style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
+                                className="absolute inset-0 px-4 py-4 pb-4 font-mono text-neutral-900 dark:text-gray-200 whitespace-pre pointer-events-none overflow-hidden"
+                                aria-hidden="true"
+                            >
+                                {highlightFloxt(text)}
+                                {safeText.endsWith('\n') ? <br /> : null}
+                            </div>
 
-                        <textarea
-                            ref={textareaRef}
-                            value={text}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
-                            onScroll={handleScroll}
-                            onKeyDown={handleKeyDown}
-                            style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-                            className="absolute inset-0 px-4 py-4 pb-12 font-mono bg-transparent text-transparent caret-black dark:caret-white resize-none outline-none z-10 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 whitespace-pre overflow-auto"
-                            placeholder="Start typing your note here in Floxt format..."
-                            spellCheck="false"
-                        />
+                            <textarea
+                                ref={textareaRef}
+                                value={text}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
+                                onScroll={handleScroll}
+                                onKeyDown={handleKeyDown}
+                                style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
+                                className="absolute inset-0 px-4 py-4 pb-4 font-mono bg-transparent text-transparent caret-black dark:caret-white resize-none outline-none z-10 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 whitespace-pre overflow-auto"
+                                placeholder="Start typing your note here in Floxt format..."
+                                spellCheck="false"
+                            />
+                        </div>
                     </div>
-                </div>
-            ) : (
-                <div
-                    onClick={handleReadViewClick}
-                    style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}
-                    className="flex-1 w-full p-4 pb-12 text-neutral-900 dark:text-gray-200 font-sans overflow-y-auto whitespace-pre-wrap outline-none pr-2 transition-colors duration-200"
-                    dangerouslySetInnerHTML={{ __html: parseFloxt(text) }}
-                />
-            )}
+                )}
 
-            <div className="flex-none absolute bottom-0 left-0 right-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-300/50 dark:border-neutral-700/50 px-4 py-1.5 flex justify-end items-center text-xs text-neutral-500 dark:text-neutral-400 font-mono select-none z-20 transition-colors duration-200">
+                {(viewMode === 'read' || viewMode === 'split') && (
+                    <div
+                        onClick={handleReadViewClick}
+                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}
+                        className={`flex-1 p-4 pb-4 text-neutral-900 dark:text-gray-200 font-sans overflow-auto whitespace-pre-wrap outline-none pr-2 transition-colors duration-200 ${viewMode === 'split' ? 'bg-neutral-50/30 dark:bg-neutral-900/30' : ''}`}
+                        dangerouslySetInnerHTML={{ __html: parseFloxt(text) }}
+                    />
+                )}
+            </div>
+
+            <div className="flex-none bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-300/50 dark:border-neutral-700/50 px-4 py-1.5 flex justify-end items-center text-xs text-neutral-500 dark:text-neutral-400 font-mono select-none z-20 transition-colors duration-200">
                 <span>{wordsCount} words</span>
                 <span className="mx-2 text-neutral-300 dark:text-neutral-600">•</span>
                 <span>{charsCount} characters</span>

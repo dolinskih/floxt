@@ -26,6 +26,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Hubert Dolinski",
     "shortDescription": "Fast and capable note-taking",
     "longDescription": "Fast and capable note-taking",
     "icon": [

@@ -1,7 +1,6 @@
 "use client";
 
-import "./panel.css";
-import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud } from 'lucide-react';
+import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud, Columns } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 import ExportModal from "./ExportModal";
@@ -17,8 +16,8 @@ interface PanelLayoutProps {
     hasUnsavedChanges: boolean;
     isFileTracked: boolean;
     setIsFileTracked: React.Dispatch<React.SetStateAction<boolean>>;
-    viewMode: 'code' | 'read';
-    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read'>>;
+    viewMode: 'code' | 'read' | 'split';
+    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read' | 'split'>>;
     fontSize: number;
     setFontSize: React.Dispatch<React.SetStateAction<number>>;
     showLineNumbers: boolean;
@@ -229,6 +228,10 @@ export default function PanelLayout({
                 } else if (e.key === '2') {
                     e.preventDefault();
                     e.stopPropagation();
+                    setViewMode('split');
+                } else if (e.key === '3') {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setViewMode('read');
                 }
             }
@@ -349,24 +352,41 @@ export default function PanelLayout({
                         </div>
                     )}
                 </button>
+
+                <button
+                    onClick={() => setViewMode('split')}
+                    title="Alt+2"
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'split' ? 'border border-neutral-400 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border border-transparent'}`}
+                >
+                    <Columns size={isOpen ? 18 : 22}/>
+                    {isOpen && (
+                        <div className="flex flex-col items-start">
+                            <span className="text-sm font-mono whitespace-nowrap leading-tight">Split view</span>
+                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>}
+                        </div>
+                    )}
+                </button>
+
                 <button
                     onClick={() => setViewMode('read')}
-                    title="Alt+2"
+                    title="Alt+3"
                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-400 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border border-transparent'}`}
                 >
                     <BookOpen size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Read view</span>
-                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>}
+                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+3</span>}
                         </div>
                     )}
                 </button>
             </div>
 
             {(hasUnsavedChanges || isFileTracked) && (
-                <div className={`text-xs font-mono px-2 transition-colors duration-150 w-full text-center ${hasUnsavedChanges ? 'text-yellow-600 dark:text-yellow-500' : 'text-neutral-500'}`}>
-                    {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
+                <div className="relative w-full h-4 mt-1">
+                    <div className={`absolute top-0 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-mono transition-colors duration-150 ${hasUnsavedChanges ? 'text-yellow-600 dark:text-yellow-500' : 'text-neutral-500'}`}>
+                        {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
+                    </div>
                 </div>
             )}
 

@@ -14,7 +14,7 @@ export default function Home() {
     const [savedTitle, setSavedTitle] = useState<string>("");
 
     const [isFileTracked, setIsFileTracked] = useState<boolean>(false);
-    const [viewMode, setViewMode] = useState<'code' | 'read'>('code');
+    const [viewMode, setViewMode] = useState<'code' | 'read' | 'split'>('code');
 
     const [fontSize, setFontSize] = useState<number>(14);
     const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
@@ -87,8 +87,11 @@ export default function Home() {
 
     useEffect(() => {
         const checkInitialFile = async () => {
+            if (typeof window !== 'undefined' && !('__TAURI_INTERNALS__' in window)) {
+                return;
+            }
+
             try {
-                // Call invoke directly! No dynamic import needed.
                 const fileData = await invoke<{name: string, content: string, path: string} | null>('get_initial_file');
 
                 if (fileData) {
@@ -101,7 +104,6 @@ export default function Home() {
                 }
             } catch (error) {
                 const errMsg = String(error);
-                // Print the Rust error to the screen if it fails
                 if (!errMsg.includes("window") && !errMsg.includes("not a function")) {
                     setText(`--- RUST ERROR ---\n\n${errMsg}`);
                 }

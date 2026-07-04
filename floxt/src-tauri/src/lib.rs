@@ -44,8 +44,36 @@ fn get_initial_file() -> Result<Option<OpenedFile>, String> {
 
 // Save file command
 #[tauri::command]
-fn save_document(path: String, content: String) -> Result<(), String> {
-    std::fs::write(path, content).map_err(|e| format!("Failed to save file: {}", e))
+fn save_document(path: String, new_name: String, content: String) -> Result<String, String> {
+    use std::fs;
+    use std::path::PathBuf;
+
+    let mut current_path = PathBuf::from(&path);
+    let clean_name = new_name.trim();
+
+    if !clean_name.is_empty() {
+        if let (Some(parent), Some(ext)) = (current_path.parent(), current_path.extension()) {
+            let new_file_name = format!("{}.{}", clean_name, ext.to_string_lossy());
+            let new_path = parent.join(new_file_name);
+
+            if current_path != new_path {
+                let is_case_change = current_path.to_string_lossy().to_lowercase() == new_path.to_string_lossy().to_lowercase();
+                
+                if !new_path.exists() || is_case_change {
+                    if let Err(e) = fs::rename(&current_path, &new_path) {
+                        return Err(format!("Failed to rename file: {}", e));
+                    }
+                    current_path = new_path; 
+                }
+            }
+        }
+    }
+
+    if let Err(e) = fs::write(&current_path, content) {
+        return Err(format!("Failed to write file: {}", e));
+    }
+
+    Ok(current_path.to_string_lossy().into_owned())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

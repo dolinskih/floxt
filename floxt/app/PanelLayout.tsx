@@ -100,7 +100,17 @@ export default function PanelLayout({
     const handleSave = useCallback(async () => {
         if (filePath) {
             try {
-                await invoke('save_document', { path: filePath, content: text });
+                const returnedPath = await invoke<string>('save_document', { 
+                    path: filePath, 
+                    newName: title, 
+                    new_name: title, 
+                    content: text 
+                });
+                
+                if (returnedPath !== filePath) {
+                    setFilePath(returnedPath);
+                }
+
                 setSavedText(text);
                 setSavedTitle(title);
             } catch (error) {
@@ -148,7 +158,8 @@ export default function PanelLayout({
             setSavedTitle(fileName);
             setIsFileTracked(true);
         }
-    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle]);
+
+    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath]);
 
     useEffect(() => {
         if (autoSave && isFileTracked && (fileHandle || filePath) && hasUnsavedChanges) {

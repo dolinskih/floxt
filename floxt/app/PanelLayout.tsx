@@ -263,7 +263,7 @@ export default function PanelLayout({
     };
 
     return (
-        <div className="flex flex-col gap-2 w-fit h-fit items-center z-50">
+        <div className="sticky top-4 self-start flex flex-col gap-2 w-fit h-fit items-center z-50">
             <section className={`p-3 h-fit bg-white dark:bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg`}>
 
                 <input type="file" accept=".floxt" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />

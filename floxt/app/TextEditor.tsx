@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
+import { open } from '@tauri-apps/plugin-shell';
 
 interface TextEditorProps {
     text: string;
@@ -56,6 +57,18 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     const handleReadViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.target as HTMLElement;
 
+        const anchor = target.closest('a');
+        if (anchor && anchor.href) {
+            e.preventDefault();
+            
+            if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+                open(anchor.href).catch(err => console.error("Failed to open link in Tauri:", err));
+            } else {
+                window.open(anchor.href, '_blank');
+            }
+            return; 
+        }
+
         if (target.tagName === 'INPUT' && target.classList.contains('floxt-checkbox')) {
             const targetIndex = parseInt(target.getAttribute('data-cb-index') || "-1", 10);
             if (targetIndex > -1) {
@@ -73,7 +86,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
-        if ((e.ctrlKey || e.metaKey) && viewMode === 'read') {
+        if ((e.ctrlKey || e.metaKey) && (viewMode === 'read' || viewMode === 'split')) {
             e.preventDefault();
             if (target === e.currentTarget) return;
 
@@ -164,7 +177,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             });
 
             parsed = parsed.replace(/\/link;([^;]+);([\s\S]*?);\//g, (match, url, placeholder) => {
-                return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline underline-offset-4 decoration-blue-600/50 dark:decoration-blue-400/50 transition-colors cursor-pointer">${placeholder}</a>`;
+                return `<a href="${url}" class="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline underline-offset-4 decoration-blue-600/50 dark:decoration-blue-400/50 transition-colors cursor-pointer">${placeholder}</a>`;
             });
 
             parsed = parsed.replace(/\/img;([^;]+);([\s\S]*?);\//g, (match, url, altText) => {

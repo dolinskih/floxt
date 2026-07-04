@@ -4,21 +4,23 @@ import { useState, useEffect } from "react";
 import PanelLayout from "./PanelLayout";
 import TextEditor from "./TextEditor";
 import NoteTitle from "./NoteTitle";
+import { invoke } from "@tauri-apps/api/core";
 
 export default function Home() {
     const [text, setText] = useState<string>("");
     const [title, setTitle] = useState<string>("");
+    const [filePath, setFilePath] = useState<string | null>(null);
     const [savedText, setSavedText] = useState<string>("");
     const [savedTitle, setSavedTitle] = useState<string>("");
-    
+
     const [isFileTracked, setIsFileTracked] = useState<boolean>(false);
-    const [viewMode, setViewMode] = useState<'code' | 'read'>('code');
+    const [viewMode, setViewMode] = useState<'code' | 'read' | 'split'>('code');
 
     const [fontSize, setFontSize] = useState<number>(14);
     const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(false);
     const [showShortcuts, setShowShortcuts] = useState<boolean>(true);
-    
+
     const [panelPosition, setPanelPosition] = useState<'left' | 'right'>('left');
 
     const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -42,13 +44,13 @@ export default function Home() {
 
         const savedPanelPosition = localStorage.getItem('floxt_panelPosition') as 'left' | 'right';
         if (savedPanelPosition) setPanelPosition(savedPanelPosition);
-        
+
         setIsLoaded(true);
     }, []);
 
     useEffect(() => {
-        if (!isLoaded) return; 
-        
+        if (!isLoaded) return;
+
         localStorage.setItem('floxt_fontSize', fontSize.toString());
         localStorage.setItem('floxt_showLineNumbers', showLineNumbers.toString());
         localStorage.setItem('floxt_autoSave', autoSave.toString());
@@ -59,7 +61,7 @@ export default function Home() {
 
     useEffect(() => {
         const root = window.document.documentElement;
-        
+
         const applyTheme = () => {
             if (theme === 'system') {
                 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -78,19 +80,47 @@ export default function Home() {
         const handleChange = () => {
             if (theme === 'system') applyTheme();
         };
-        
+
         mediaQuery.addEventListener('change', handleChange);
         return () => mediaQuery.removeEventListener('change', handleChange);
     }, [theme]);
+
+    useEffect(() => {
+        const checkInitialFile = async () => {
+            if (typeof window !== 'undefined' && !('__TAURI_INTERNALS__' in window)) {
+                return;
+            }
+
+            try {
+                const fileData = await invoke<{name: string, content: string, path: string} | null>('get_initial_file');
+
+                if (fileData) {
+                    setText(fileData.content);
+                    setTitle(fileData.name);
+                    setSavedText(fileData.content);
+                    setSavedTitle(fileData.name);
+                    setIsFileTracked(true);
+                    setFilePath(fileData.path);
+                }
+            } catch (error) {
+                const errMsg = String(error);
+                if (!errMsg.includes("window") && !errMsg.includes("not a function")) {
+                    setText(`--- RUST ERROR ---\n\n${errMsg}`);
+                }
+            }
+        };
+
+        checkInitialFile();
+    }, []);
 
     const hasUnsavedChanges = text !== savedText || title !== savedTitle;
 
     return (
         <main className={`flex w-full min-h-screen p-4 gap-6 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200 ${panelPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
-            <PanelLayout 
-                text={text} 
-                setText={setText} 
-                title={title} 
+            <PanelLayout
+                text={text}
+                setText={setText}
+                title={title}
                 setTitle={setTitle}
                 setSavedText={setSavedText}
                 setSavedTitle={setSavedTitle}
@@ -111,12 +141,14 @@ export default function Home() {
                 setTheme={setTheme}
                 panelPosition={panelPosition}
                 setPanelPosition={setPanelPosition}
+                filePath={filePath}
+                setFilePath={setFilePath}
             />
             <div className="flex-1 flex flex-col min-w-0">
                 <NoteTitle title={title} setTitle={setTitle} />
-                <TextEditor 
-                    text={text} 
-                    setText={setText} 
+                <TextEditor
+                    text={text}
+                    setText={setText}
                     viewMode={viewMode}
                     setViewMode={setViewMode}
                     fontSize={fontSize}

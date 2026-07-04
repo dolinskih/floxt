@@ -21,7 +21,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
 
         do {
             previous = md;
-            md = md.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);([\s\S]*?);\//g, (match, tag, content) => {
+            md = md.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, tag, content) => {
                 switch (tag) {
                     case 'h1': return `# ${content}`;
                     case 'h2': return `## ${content}`;
@@ -67,8 +67,8 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                 }
             });
 
-            md = md.replace(/\/link;([^;]+);([\s\S]*?);\//g, (match, url, placeholder) => `[${placeholder}](${url})`);
-            md = md.replace(/\/img;([^;]+);([\s\S]*?);\//g, (match, url, altText) => `![${altText}](${url})`);
+            md = md.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, placeholder) => `[${placeholder}](${url})`);
+            md = md.replace(/\/img;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, altText) => `![${altText}](${url})`);
 
         } while (md !== previous);
 
@@ -85,7 +85,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
 
         do {
             previous = html;
-            html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);([\s\S]*?);\//g, (match, tag, content) => {
+            html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, tag, content) => {
                 switch (tag) {
                     case 'h1': return `<h1>${content}</h1>`;
                     case 'h2': return `<h2>${content}</h2>`;
@@ -133,8 +133,8 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                 }
             });
 
-            html = html.replace(/\/link;([^;]+);([\s\S]*?);\//g, (match, url, placeholder) => `<a href="${url}">${placeholder}</a>`);
-            html = html.replace(/\/img;([^;]+);([\s\S]*?);\//g, (match, url, altText) => `<img src="${url}" alt="${altText}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" loading="lazy" />`);
+            html = html.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, placeholder) => `<a href="${url}">${placeholder}</a>`);
+            html = html.replace(/\/img;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, altText) => `<img src="${url}" alt="${altText}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" loading="lazy" />`);
 
         } while (html !== previous);
 

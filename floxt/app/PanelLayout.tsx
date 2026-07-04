@@ -1,10 +1,10 @@
 "use client";
 
-import "./panel.css";
-import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud } from 'lucide-react';
+import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud, Columns } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 import ExportModal from "./ExportModal";
+import { invoke } from '@tauri-apps/api/core';
 
 interface PanelLayoutProps {
     text: string;
@@ -16,8 +16,8 @@ interface PanelLayoutProps {
     hasUnsavedChanges: boolean;
     isFileTracked: boolean;
     setIsFileTracked: React.Dispatch<React.SetStateAction<boolean>>;
-    viewMode: 'code' | 'read';
-    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read'>>;
+    viewMode: 'code' | 'read' | 'split';
+    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read' | 'split'>>;
     fontSize: number;
     setFontSize: React.Dispatch<React.SetStateAction<number>>;
     showLineNumbers: boolean;
@@ -30,6 +30,8 @@ interface PanelLayoutProps {
     setTheme: React.Dispatch<React.SetStateAction<'light' | 'dark' | 'system'>>;
     panelPosition: 'left' | 'right';
     setPanelPosition: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
+    filePath: string | null;
+    setFilePath: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const commandsData = [
@@ -54,7 +56,7 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition, filePath, setFilePath
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
@@ -96,56 +98,77 @@ export default function PanelLayout({
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
     const handleSave = useCallback(async () => {
-        const fileName = title.trim() === "" ? "Untitled" : title;
-
-        try {
-            if ('showSaveFilePicker' in window) {
-                let handle = fileHandle;
-                if (!handle) {
-                    handle = await (window as any).showSaveFilePicker({
-                        suggestedName: `${fileName}.floxt`,
-                        types: [{ description: 'Floxt File', accept: { 'text/plain': ['.floxt'] } }],
-                    });
-                    setFileHandle(handle);
+        if (filePath) {
+            try {
+                const returnedPath = await invoke<string>('save_document', { 
+                    path: filePath, 
+                    newName: title, 
+                    new_name: title, 
+                    content: text 
+                });
+                
+                if (returnedPath !== filePath) {
+                    setFilePath(returnedPath);
                 }
-                const writable = await handle.createWritable();
-                await writable.write(text);
-                await writable.close();
 
-                const actualFileName = handle.name.replace(/\.floxt$/i, "");
                 setSavedText(text);
-                setSavedTitle(actualFileName);
-                setTitle(actualFileName);
-                setIsFileTracked(true);
-                return;
+                setSavedTitle(title);
+            } catch (error) {
+                console.error("Failed to save:", error);
             }
-        } catch (err: any) {
-            if (err.name === 'AbortError') return;
+        } else {
+            const fileName = title.trim() === "" ? "Untitled" : title;
+
+            try {
+                if ('showSaveFilePicker' in window) {
+                    let handle = fileHandle;
+                    if (!handle) {
+                        handle = await (window as any).showSaveFilePicker({
+                            suggestedName: `${fileName}.floxt`,
+                            types: [{ description: 'Floxt File', accept: { 'text/plain': ['.floxt'] } }],
+                        });
+                        setFileHandle(handle);
+                    }
+                    const writable = await handle.createWritable();
+                    await writable.write(text);
+                    await writable.close();
+
+                    const actualFileName = handle.name.replace(/\.floxt$/i, "");
+                    setSavedText(text);
+                    setSavedTitle(actualFileName);
+                    setTitle(actualFileName);
+                    setIsFileTracked(true);
+                    return;
+                }
+            } catch (err: any) {
+                if (err.name === 'AbortError') return;
+            }
+
+            const blob = new Blob([text], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${fileName}.floxt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            setSavedText(text);
+            setSavedTitle(fileName);
+            setIsFileTracked(true);
         }
 
-        const blob = new Blob([text], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${fileName}.floxt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        setSavedText(text);
-        setSavedTitle(fileName);
-        setIsFileTracked(true);
-    }, [text, title, fileHandle, setSavedText, setSavedTitle, setIsFileTracked, setTitle]);
+    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath]);
 
     useEffect(() => {
-        if (autoSave && isFileTracked && fileHandle && hasUnsavedChanges) {
+        if (autoSave && isFileTracked && (fileHandle || filePath) && hasUnsavedChanges) {
             const timeoutId = setTimeout(() => {
                 handleSave();
             }, 1500);
             return () => clearTimeout(timeoutId);
         }
-    }, [text, autoSave, isFileTracked, fileHandle, hasUnsavedChanges, handleSave]);
+    }, [text, autoSave, isFileTracked, fileHandle, filePath, hasUnsavedChanges, handleSave]);
 
     const handleOpenClick = useCallback(async () => {
         try {
@@ -216,6 +239,10 @@ export default function PanelLayout({
                 } else if (e.key === '2') {
                     e.preventDefault();
                     e.stopPropagation();
+                    setViewMode('split');
+                } else if (e.key === '3') {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setViewMode('read');
                 }
             }
@@ -247,7 +274,7 @@ export default function PanelLayout({
     };
 
     return (
-        <div className="flex flex-col gap-2 w-fit h-fit items-center z-50">
+        <div className="sticky top-4 self-start flex flex-col gap-2 w-fit h-fit items-center z-50">
             <section className={`p-3 h-fit bg-white dark:bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg`}>
 
                 <input type="file" accept=".floxt" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />
@@ -336,24 +363,41 @@ export default function PanelLayout({
                         </div>
                     )}
                 </button>
+
+                <button
+                    onClick={() => setViewMode('split')}
+                    title="Alt+2"
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'split' ? 'border border-neutral-400 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border border-transparent'}`}
+                >
+                    <Columns size={isOpen ? 18 : 22}/>
+                    {isOpen && (
+                        <div className="flex flex-col items-start">
+                            <span className="text-sm font-mono whitespace-nowrap leading-tight">Split view</span>
+                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>}
+                        </div>
+                    )}
+                </button>
+
                 <button
                     onClick={() => setViewMode('read')}
-                    title="Alt+2"
+                    title="Alt+3"
                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-400 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border border-transparent'}`}
                 >
                     <BookOpen size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Read view</span>
-                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>}
+                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+3</span>}
                         </div>
                     )}
                 </button>
             </div>
 
             {(hasUnsavedChanges || isFileTracked) && (
-                <div className={`text-xs font-mono px-2 transition-colors duration-150 w-full text-center ${hasUnsavedChanges ? 'text-yellow-600 dark:text-yellow-500' : 'text-neutral-500'}`}>
-                    {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
+                <div className="relative w-full h-4 mt-1">
+                    <div className={`absolute top-0 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-mono transition-colors duration-150 ${hasUnsavedChanges ? 'text-yellow-600 dark:text-yellow-500' : 'text-neutral-500'}`}>
+                        {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
+                    </div>
                 </div>
             )}
 

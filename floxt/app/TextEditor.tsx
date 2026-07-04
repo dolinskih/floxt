@@ -181,7 +181,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             });
 
             parsed = parsed.replace(/\/img;([^;]+);([\s\S]*?);\//g, (match, url, altText) => {
-                return `<img src="${url}" alt="${altText}" class="max-w-full h-auto rounded-lg border border-neutral-300 dark:border-neutral-700 shadow-sm dark:shadow-md my-4" loading="lazy" />`;
+                return `<div class="resize-x overflow-hidden inline-block my-4 rounded-lg border border-neutral-300 dark:border-neutral-700 shadow-sm dark:shadow-md bg-neutral-100 dark:bg-neutral-800" style="max-width: 75%; max-height: 50vh; min-width: 150px; width: 50%; line-height: 0; font-size: 0;"><img src="${url}" alt="${altText}" class="w-full h-auto pointer-events-none" style="max-height: 50vh; object-fit: contain;" loading="lazy" /></div>`;
             });
 
         } while (parsed !== previous);

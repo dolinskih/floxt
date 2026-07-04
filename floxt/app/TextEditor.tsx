@@ -18,11 +18,13 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     const lineNumbersRef = useRef<HTMLDivElement>(null);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        const target = e.target as HTMLTextAreaElement;
+        const start = target.selectionStart;
+        const end = target.selectionEnd;
+
+        // Tab Indentation
         if (e.key === 'Tab') {
             e.preventDefault();
-            const target = e.target as HTMLTextAreaElement;
-            const start = target.selectionStart;
-            const end = target.selectionEnd;
             const newText = text.substring(0, start) + "    " + text.substring(end);
             setText(newText);
             setTimeout(() => {
@@ -30,6 +32,139 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 4;
                 }
             }, 0);
+            return;
+        }
+
+        // Auto-close tags when typing ';'
+        if (e.key === ';') {
+            const textBefore = text.substring(0, start);
+            const match = textBefore.match(/\/([a-zA-Z0-9-]+)$/);
+            
+            if (match) {
+                const tag = match[1].toLowerCase();
+                const standardTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', '-', '0', 'o', 'code', 'table'];
+                const complexTags = ['link', 'img'];
+
+                if (standardTags.includes(tag)) {
+                    e.preventDefault();
+                    const newText = text.substring(0, start) + ";;/" + text.substring(end);
+                    setText(newText);
+                    setTimeout(() => {
+                        if (textareaRef.current) textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 1;
+                    }, 0);
+                    return;
+                } else if (complexTags.includes(tag)) {
+                    e.preventDefault();
+                    const newText = text.substring(0, start) + ";url;description;/" + text.substring(end);
+                    setText(newText);
+                    setTimeout(() => {
+                        if (textareaRef.current) {
+                            textareaRef.current.selectionStart = start + 1;
+                            textareaRef.current.selectionEnd = start + 4;
+                        }
+                    }, 0);
+                    return;
+                }
+            }
+        }
+
+        // Auto-list items when pressing Enter inside a list block
+        if (e.key === 'Enter') {
+            const textBefore = text.substring(0, start);
+            const matches = [...textBefore.matchAll(/(\/([a-z0-9-]+);|;\/)/gi)];
+            const stack: string[] = [];
+            
+            for (const m of matches) {
+                if (m[0] === ';/') {
+                    stack.pop();
+                } else if (m[2]) {
+                    stack.push(m[2].toLowerCase());
+                }
+            }
+            
+            const activeTag = stack.length > 0 ? stack[stack.length - 1] : null;
+
+            if (activeTag === '-' || activeTag === '0' || activeTag === 'o') {
+                e.preventDefault();
+                const newText = text.substring(0, start) + "\n- " + text.substring(end);
+                setText(newText);
+                setTimeout(() => {
+                    if (textareaRef.current) textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 3;
+                }, 0);
+                return;
+            }
+        }
+
+        // Smart Navigation & Selection
+        if (e.key === 'ArrowRight') {
+            if (start === end) {
+                if (text.substring(start, start + 2) === ';/') {
+                    e.preventDefault();
+                    target.selectionStart = target.selectionEnd = start + 2;
+                    return;
+                }
+                if (text.substring(start, start + 5) === ';url;') {
+                    e.preventDefault();
+                    target.selectionStart = start + 1;
+                    target.selectionEnd = start + 4;
+                    return;
+                }
+                if (text.substring(start, start + 14) === ';description;/') {
+                    e.preventDefault();
+                    target.selectionStart = start + 1;
+                    target.selectionEnd = start + 12;
+                    return;
+                }
+            }
+        }
+
+        if (e.key === 'ArrowLeft') {
+            if (start === end) {
+                if (text.substring(start - 5, start) === ';url;') {
+                    e.preventDefault();
+                    target.selectionStart = start - 4;
+                    target.selectionEnd = start - 1;
+                    return;
+                }
+                if (text.substring(start - 13, start) === ';description;' && text.substring(start, start + 1) === '/') {
+                    e.preventDefault();
+                    target.selectionStart = start - 12;
+                    target.selectionEnd = start - 1;
+                    return;
+                }
+            }
+        }
+
+        // Smart Backspace (delete auto-closed tags)
+        if (e.key === 'Backspace' && start === end) {
+            const textBefore = text.substring(0, start);
+            const textAfter = text.substring(end);
+            
+            const match = textBefore.match(/\/([a-zA-Z0-9-]+);$/);
+            
+            if (match) {
+                const tag = match[1].toLowerCase();
+                const standardTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', '-', '0', 'o', 'code', 'table'];
+                const complexTags = ['link', 'img'];
+
+                if (standardTags.includes(tag) && textAfter.startsWith(';/')) {
+                    e.preventDefault();
+                    const newText = textBefore.slice(0, -1) + textAfter.substring(2);
+                    setText(newText);
+                    setTimeout(() => {
+                        if (textareaRef.current) textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start - 1;
+                    }, 0);
+                    return;
+                } else if (complexTags.includes(tag) && textAfter.startsWith('url;description;/')) {
+                    e.preventDefault();
+                    const newText = textBefore.slice(0, -1) + textAfter.substring(17);
+                    setText(newText);
+                    setTimeout(() => {
+                        if (textareaRef.current) textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start - 1;
+                    }, 0);
+                    return;
+                }
+            }
         }
     };
 
@@ -47,19 +182,23 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         const parts = rawText.split(/(\/(?:h[1-6]|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/|(?<=\/(?:link|img);[^;]*);)/gi);
 
         let openTagsCount = 0;
+        let complexTagState = 0; 
 
         return parts.map((part, i) => {
             if (i % 2 !== 0) {
                 if (part === ';/') {
+                    complexTagState = 0; 
                     if (openTagsCount > 0) {
-                        openTagsCount--;
+                        openTagsCount--; 
                         return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;/</span>;
                     } else {
                         return <span key={i}>{part}</span>;
                     }
                 } 
                 
+  
                 if (part === ';') {
+                    if (complexTagState === 1) complexTagState = 2; 
                     return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;</span>;
                 }
 
@@ -73,17 +212,19 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
 
                     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's'].includes(lowerTag)) {
                         colorClass = "text-yellow-600 dark:text-yellow-500";
-                    } 
-                    else if (['-', '0', 'o'].includes(lowerTag)) {
+                    } else if (['-', '0', 'o'].includes(lowerTag)) {
                         colorClass = "text-blue-600 dark:text-blue-400";
-                    } 
-                    else if (lowerTag === '[]' || lowerTag === '[x]') {
+                    } else if (lowerTag === '[]' || lowerTag === '[x]') {
                         colorClass = "text-red-600 dark:text-red-500";
                         isSelfClosing = true;
                     }
 
-                    if (!isSelfClosing) {
-                        openTagsCount++; 
+                    if (!isSelfClosing) openTagsCount++;
+
+                    if (lowerTag === 'link' || lowerTag === 'img') {
+                        complexTagState = 1; 
+                    } else {
+                        complexTagState = 0;
                     }
 
                     return (
@@ -94,8 +235,16 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                         </span>
                     );
                 }
+            } else {
+                if (complexTagState === 1 && part === 'url') {
+                    return <span key={i} className="text-neutral-500 dark:text-neutral-600 italic select-all">{part}</span>;
+                }
+                if (complexTagState === 2 && part === 'description') {
+                    return <span key={i} className="text-neutral-500 dark:text-neutral-600 italic select-all">{part}</span>;
+                }
+                
+                return <span key={i}>{part}</span>;
             }
-            return <span key={i}>{part}</span>;
         });
     };
 

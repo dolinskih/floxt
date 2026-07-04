@@ -44,11 +44,56 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     };
 
     const highlightFloxt = (rawText: string) => {
-        const parts = rawText.split(/(\/(?:h[1-6]|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/)/gi);
+        const parts = rawText.split(/(\/(?:h[1-6]|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/|(?<=\/(?:link|img);[^;]*);)/gi);
+
+        let openTagsCount = 0;
 
         return parts.map((part, i) => {
-            if (part.match(/(\/(?:h[1-6]|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/)/i)) {
-                return <span key={i} className="text-yellow-600 dark:text-yellow-500 font-bold">{part}</span>;
+            if (i % 2 !== 0) {
+                if (part === ';/') {
+                    if (openTagsCount > 0) {
+                        openTagsCount--;
+                        return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;/</span>;
+                    } else {
+                        return <span key={i}>{part}</span>;
+                    }
+                } 
+                
+                if (part === ';') {
+                    return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;</span>;
+                }
+
+                const tagMatch = part.match(/^\/(.*);$/i);
+                if (tagMatch) {
+                    const tagName = tagMatch[1];
+                    const lowerTag = tagName.toLowerCase();
+                    
+                    let colorClass = "text-emerald-600 dark:text-emerald-400"; 
+                    let isSelfClosing = false;
+
+                    if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's'].includes(lowerTag)) {
+                        colorClass = "text-yellow-600 dark:text-yellow-500";
+                    } 
+                    else if (['-', '0', 'o'].includes(lowerTag)) {
+                        colorClass = "text-blue-600 dark:text-blue-400";
+                    } 
+                    else if (lowerTag === '[]' || lowerTag === '[x]') {
+                        colorClass = "text-red-600 dark:text-red-500";
+                        isSelfClosing = true;
+                    }
+
+                    if (!isSelfClosing) {
+                        openTagsCount++; 
+                    }
+
+                    return (
+                        <span key={i} className="font-bold">
+                            <span className="text-neutral-400 dark:text-neutral-500">/</span>
+                            <span className={colorClass}>{tagName}</span>
+                            <span className="text-neutral-400 dark:text-neutral-500">;</span>
+                        </span>
+                    );
+                }
             }
             return <span key={i}>{part}</span>;
         });

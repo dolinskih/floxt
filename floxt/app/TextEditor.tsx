@@ -39,10 +39,10 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         if (e.key === ';') {
             const textBefore = text.substring(0, start);
             const match = textBefore.match(/\/([a-zA-Z0-9-]+)$/);
-            
+
             if (match) {
                 const tag = match[1].toLowerCase();
-                const standardTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', '-', '0', 'o', 'code', 'table'];
+                const standardTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', 'h', '-', '0', 'o', 'code', 'table'];
                 const complexTags = ['link', 'img'];
 
                 if (standardTags.includes(tag)) {
@@ -73,7 +73,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             const textBefore = text.substring(0, start);
             const matches = [...textBefore.matchAll(/(\/([a-z0-9-]+);|;\/)/gi)];
             const stack: string[] = [];
-            
+
             for (const m of matches) {
                 if (m[0] === ';/') {
                     stack.pop();
@@ -81,7 +81,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     stack.push(m[2].toLowerCase());
                 }
             }
-            
+
             const activeTag = stack.length > 0 ? stack[stack.length - 1] : null;
 
             if (activeTag === '-' || activeTag === '0' || activeTag === 'o') {
@@ -139,12 +139,12 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         if (e.key === 'Backspace' && start === end) {
             const textBefore = text.substring(0, start);
             const textAfter = text.substring(end);
-            
+
             const match = textBefore.match(/\/([a-zA-Z0-9-]+);$/);
-            
+
             if (match) {
                 const tag = match[1].toLowerCase();
-                const standardTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', '-', '0', 'o', 'code', 'table'];
+                const standardTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', 'h', '-', '0', 'o', 'code', 'table'];
                 const complexTags = ['link', 'img'];
 
                 if (standardTags.includes(tag) && textAfter.startsWith(';/')) {
@@ -179,26 +179,25 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     };
 
     const highlightFloxt = (rawText: string) => {
-        const parts = rawText.split(/(\/(?:h[1-6]|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/|(?<=\/(?:link|img);[^;]*);)/gi);
+        const parts = rawText.split(/(\/(?:h[1-6]|h|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/|(?<=\/(?:link|img);[^;]*);)/gi);
 
         let openTagsCount = 0;
-        let complexTagState = 0; 
+        let complexTagState = 0;
 
         return parts.map((part, i) => {
             if (i % 2 !== 0) {
                 if (part === ';/') {
-                    complexTagState = 0; 
+                    complexTagState = 0;
                     if (openTagsCount > 0) {
-                        openTagsCount--; 
+                        openTagsCount--;
                         return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;/</span>;
                     } else {
                         return <span key={i}>{part}</span>;
                     }
-                } 
-                
-  
+                }
+
                 if (part === ';') {
-                    if (complexTagState === 1) complexTagState = 2; 
+                    if (complexTagState === 1) complexTagState = 2;
                     return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;</span>;
                 }
 
@@ -206,11 +205,11 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                 if (tagMatch) {
                     const tagName = tagMatch[1];
                     const lowerTag = tagName.toLowerCase();
-                    
-                    let colorClass = "text-emerald-600 dark:text-emerald-400"; 
+
+                    let colorClass = "text-emerald-600 dark:text-emerald-400";
                     let isSelfClosing = false;
 
-                    if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's'].includes(lowerTag)) {
+                    if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', 'h'].includes(lowerTag)) {
                         colorClass = "text-yellow-600 dark:text-yellow-500";
                     } else if (['-', '0', 'o'].includes(lowerTag)) {
                         colorClass = "text-blue-600 dark:text-blue-400";
@@ -222,7 +221,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     if (!isSelfClosing) openTagsCount++;
 
                     if (lowerTag === 'link' || lowerTag === 'img') {
-                        complexTagState = 1; 
+                        complexTagState = 1;
                     } else {
                         complexTagState = 0;
                     }
@@ -242,7 +241,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                 if (complexTagState === 2 && part === 'description') {
                     return <span key={i} className="text-neutral-500 dark:text-neutral-600 italic select-all">{part}</span>;
                 }
-                
+
                 return <span key={i}>{part}</span>;
             }
         });
@@ -251,16 +250,37 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     const handleReadViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.target as HTMLElement;
 
+        const copyBtn = target.closest('.floxt-copy-btn') as HTMLButtonElement;
+        if (copyBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const codeToCopy = copyBtn.getAttribute('data-code');
+            if (codeToCopy) {
+                navigator.clipboard.writeText(decodeURIComponent(codeToCopy)).then(() => {
+                    const originalText = copyBtn.innerText;
+                    copyBtn.innerText = "Copied!";
+                    copyBtn.classList.add("text-emerald-600", "dark:text-emerald-400");
+
+                    setTimeout(() => {
+                        copyBtn.innerText = originalText;
+                        copyBtn.classList.remove("text-emerald-600", "dark:text-emerald-400");
+                    }, 2000);
+                });
+            }
+            return;
+        }
+
         const anchor = target.closest('a');
         if (anchor && anchor.href) {
             e.preventDefault();
-            
+
             if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
                 open(anchor.href).catch(err => console.error("Failed to open link in Tauri:", err));
             } else {
                 window.open(anchor.href, '_blank');
             }
-            return; 
+            return;
         }
 
         if (target.tagName === 'INPUT' && target.classList.contains('floxt-checkbox')) {
@@ -311,12 +331,15 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     };
 
     const parseFloxt = (rawText: string) => {
-        let parsed = rawText;
+        let parsed = rawText
+            .replace(/&/g, '__FLXT_AMP__')
+            .replace(/</g, '__FLXT_LT__')
+            .replace(/>/g, '__FLXT_GT__');
         let previous;
 
         do {
             previous = parsed;
-            parsed = parsed.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, tag, content) => {
+            parsed = parsed.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
                 switch (tag) {
                     case 'h1': return `<h1 class="text-4xl font-bold mt-4 mb-2">${content}</h1>`;
                     case 'h2': return `<h2 class="text-3xl font-bold mt-3 mb-2">${content}</h2>`;
@@ -328,6 +351,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     case 'i': return `<em>${content}</em>`;
                     case 'u': return `<u class="underline underline-offset-4 decoration-2">${content}</u>`;
                     case 's': return `<del class="decoration-2">${content}</del>`;
+                    case 'h': return `<mark class="bg-yellow-200 dark:bg-yellow-500/40 text-neutral-900 dark:text-neutral-100 px-1 rounded-sm">${content}</mark>`;
 
                     case '-': {
                         const cleanContent = content.trim();
@@ -342,8 +366,16 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     }
 
                     case 'code': {
-                        const safeCode = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        return `<code class="bg-neutral-100 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 text-emerald-600 dark:text-emerald-400 font-mono px-2 py-1 rounded text-sm">${safeCode}</code>`;
+                        let cleanContent = content.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
+
+                        const rawCode = cleanContent
+                            .replace(/__FLXT_LT__/g, '<')
+                            .replace(/__FLXT_GT__/g, '>')
+                            .replace(/__FLXT_AMP__/g, '&');
+
+                        const dataCode = encodeURIComponent(rawCode);
+
+                        return `<div class="relative group my-4 rounded-lg overflow-hidden border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-950"><button class="floxt-copy-btn absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 px-2 py-1 text-xs font-medium rounded-md bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm cursor-pointer whitespace-nowrap" data-code="${dataCode}">Copy</button><pre class="p-4 overflow-x-auto text-sm m-0"><code class="text-emerald-600 dark:text-emerald-400 font-mono bg-transparent border-none p-0">${cleanContent}</code></pre></div>`;
                     }
 
                     case 'table': {
@@ -369,11 +401,11 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                 }
             });
 
-            parsed = parsed.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, placeholder) => {
+            parsed = parsed.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, url, placeholder) => {
                 return `<a href="${url}" class="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline underline-offset-4 decoration-blue-600/50 dark:decoration-blue-400/50 transition-colors cursor-pointer">${placeholder}</a>`;
             });
 
-            parsed = parsed.replace(/\/img;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, altText) => {
+            parsed = parsed.replace(/\/img;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, url, altText) => {
                 return `<div class="resize-x overflow-hidden inline-block my-4 rounded-lg border border-neutral-300 dark:border-neutral-700 shadow-sm dark:shadow-md bg-neutral-100 dark:bg-neutral-800" style="max-width: 75%; max-height: 50vh; min-width: 150px; width: 50%; line-height: 0; font-size: 0;"><img src="${url}" alt="${altText}" class="w-full h-auto pointer-events-none" style="max-height: 50vh; object-fit: contain;" loading="lazy" /></div>`;
             });
 
@@ -386,6 +418,11 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             cbIndex++;
             return html;
         });
+
+        parsed = parsed
+            .replace(/__FLXT_AMP__/g, '&amp;')
+            .replace(/__FLXT_LT__/g, '&lt;')
+            .replace(/__FLXT_GT__/g, '&gt;');
 
         return parsed;
     };

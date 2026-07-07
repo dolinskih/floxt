@@ -21,7 +21,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
 
         do {
             previous = md;
-            md = md.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, tag, content) => {
+            md = md.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
                 switch (tag) {
                     case 'h1': return `# ${content}`;
                     case 'h2': return `## ${content}`;
@@ -33,6 +33,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                     case 'i': return `*${content}*`;
                     case 'u': return `<u>${content}</u>`;
                     case 's': return `~~${content}~~`;
+                    case 'h': return `==${content}==`;
                     case '-': {
                         const cleanContent = content.trim();
                         return cleanContent.replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '- $1\n') + '\n';
@@ -78,14 +79,16 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
         triggerDownload(md, `${fileName}.md`, "text/markdown");
     };
 
-    // --- FLOXT TO HTML PARSER ---
-    const exportToHtml = () => {
-        let html = text;
+    const generateHTML = () => {
+        let html = text
+            .replace(/&/g, '__FLXT_AMP__')
+            .replace(/</g, '__FLXT_LT__')
+            .replace(/>/g, '__FLXT_GT__');
         let previous;
 
         do {
             previous = html;
-            html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, tag, content) => {
+            html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
                 switch (tag) {
                     case 'h1': return `<h1>${content}</h1>`;
                     case 'h2': return `<h2>${content}</h2>`;
@@ -97,6 +100,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                     case 'i': return `<em>${content}</em>`;
                     case 'u': return `<u>${content}</u>`;
                     case 's': return `<del>${content}</del>`;
+                    case 'h': return `<mark>${content}</mark>`;
                     case '-': {
                         const listItems = content.trim().replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li>$1</li>');
                         return `<ul>\n${listItems}\n</ul>`;
@@ -107,8 +111,8 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                         return `<ol>\n${listItems}\n</ol>`;
                     }
                     case 'code': {
-                        const safeCode = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        return `<pre><code>${safeCode}</code></pre>`;
+                        const cleanContent = content.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
+                        return `<pre><code>${cleanContent}</code></pre>`;
                     }
 
                     case 'table': {
@@ -141,7 +145,12 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
         html = html.replace(/\/\[\];/g, '<input type="checkbox" disabled />');
         html = html.replace(/\/\[x\];/gi, '<input type="checkbox" checked disabled />');
 
-        const fullHtmlDocument = `
+        html = html
+            .replace(/__FLXT_AMP__/g, '&amp;')
+            .replace(/__FLXT_LT__/g, '&lt;')
+            .replace(/__FLXT_GT__/g, '&gt;');
+
+        return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -164,14 +173,49 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
             th, td { border-color: #262626; }
             th { background-color: #171717; }
         }
+
+        @media print {
+            @page { margin: 0; } 
+            body { background-color: white !important; color: black !important; margin: 0; padding: 0.5in; }
+            pre { background: #f4f4f4 !important; border-color: #ccc !important; }
+            a { color: #2563eb !important; text-decoration: none; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+        }
     </style>
 </head>
 <body>
 ${html}
 </body>
-</html>`;
+</html>`.trim();
+    };
 
-        triggerDownload(fullHtmlDocument.trim(), `${fileName}.html`, "text/html");
+    const exportToHtml = () => {
+        triggerDownload(generateHTML(), `${fileName}.html`, "text/html");
+    };
+
+    const exportToPdf = () => {
+        const htmlContent = generateHTML();
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (iframeDoc) {
+            iframeDoc.open();
+            iframeDoc.write(htmlContent);
+            iframeDoc.close();
+        }
+
+        setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                onClose();
+            }, 100);
+        }, 250);
     };
 
     const triggerDownload = (content: string, filename: string, mimeType: string) => {
@@ -215,6 +259,19 @@ ${html}
                     <div className="flex flex-col items-start">
                         <span className="text-neutral-900 dark:text-gray-200 font-bold text-base">Web Page (.html)</span>
                         <span className="text-neutral-500 dark:text-neutral-400 text-xs">A styled, readable web document.</span>
+                    </div>
+                </button>
+
+                <button
+                    onClick={exportToPdf}
+                    className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors group cursor-pointer"
+                >
+                    <div className="bg-white dark:bg-neutral-900 p-2 rounded text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white border border-neutral-200 dark:border-transparent transition-colors">
+                        <Download size={20} />
+                    </div>
+                    <div className="flex flex-col items-start">
+                        <span className="text-neutral-900 dark:text-gray-200 font-bold text-base">PDF Document (.pdf)</span>
+                        <span className="text-neutral-500 dark:text-neutral-400 text-xs">Print or save as a standard PDF file.</span>
                     </div>
                 </button>
             </div>

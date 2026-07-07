@@ -1,10 +1,18 @@
 "use client";
 
-import { Plus, FolderOpen, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud, Columns } from 'lucide-react';
+import { Plus, SquareArrowOutUpRight, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud, Columns, Upload, Library, Trash } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 import ExportModal from "./ExportModal";
 import { invoke } from '@tauri-apps/api/core';
+import { save } from '@tauri-apps/plugin-dialog';
+import ImportModal from './ImportModal';
+
+export interface ProjectFile {
+    name: string;
+    path: string;
+    hasUnsavedChanges: boolean;
+}
 
 interface PanelLayoutProps {
     text: string;
@@ -32,6 +40,13 @@ interface PanelLayoutProps {
     setPanelPosition: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
     filePath: string | null;
     setFilePath: React.Dispatch<React.SetStateAction<string | null>>;
+    projectName?: string | null;
+    projectFiles?: ProjectFile[];
+    onOpenProject?: () => void;
+    onOpenFileFromProject?: (path: string) => void;
+    onSaveFileFromProject?: (path: string) => void;
+    onNewFileSaved?: (path: string, name: string) => void;
+    onDeleteFileFromProject?: (path: string) => void;
 }
 
 const commandsData = [
@@ -45,6 +60,7 @@ const commandsData = [
     { icon: "I", name: "Italic", open: "/i;", close: ";/" },
     { icon: "U", name: "Underline", open: "/u;", close: ";/" },
     { icon: "S", name: "Strike-through", open: "/s;", close: ";/" },
+    { icon: "🖍️", name: "Highlight", open: "/h;", close: ";/ "},
     { icon: "•", name: "Unordered list block", open: "/-;", close: ";/" },
     { icon: "1²3", name: "Ordered list block", open: "/0;", close: ";/" },
     { icon: "☐", name: "Unchecked checkbox", open: "/[];", close: "None" },
@@ -56,7 +72,7 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition, filePath, setFilePath
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition, filePath, setFilePath, projectName, projectFiles, onOpenProject, onOpenFileFromProject, onSaveFileFromProject, onNewFileSaved, onDeleteFileFromProject
 }: PanelLayoutProps) {
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
@@ -65,6 +81,7 @@ export default function PanelLayout({
     const [isCommandsOpen, setIsCommandsOpen] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
     const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
+    const [isImportOpen, setIsImportOpen] = useState<boolean>(false);
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
@@ -95,18 +112,19 @@ export default function PanelLayout({
         setSavedTitle("");
         setIsFileTracked(false);
         setFileHandle(null);
-    }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
+        setFilePath(null);
+    }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked, setFilePath]);
 
     const handleSave = useCallback(async () => {
         if (filePath) {
             try {
-                const returnedPath = await invoke<string>('save_document', { 
-                    path: filePath, 
-                    newName: title, 
-                    new_name: title, 
-                    content: text 
+                const returnedPath = await invoke<string>('save_document', {
+                    path: filePath,
+                    newName: title,
+                    new_name: title,
+                    content: text
                 });
-                
+
                 if (returnedPath !== filePath) {
                     setFilePath(returnedPath);
                 }
@@ -119,44 +137,36 @@ export default function PanelLayout({
         } else {
             const fileName = title.trim() === "" ? "Untitled" : title;
 
-            try {
-                if ('showSaveFilePicker' in window) {
-                    let handle = fileHandle;
-                    if (!handle) {
-                        handle = await (window as any).showSaveFilePicker({
-                            suggestedName: `${fileName}.floxt`,
-                            types: [{ description: 'Floxt File', accept: { 'text/plain': ['.floxt'] } }],
+            if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+                try {
+                    const newPath = await save({
+                        title: 'Save New Note',
+                        defaultPath: `${fileName}.floxt`,
+                        filters: [{ name: 'Floxt File', extensions: ['floxt'] }]
+                    });
+
+                    if (newPath) {
+                        const returnedPath = await invoke<string>('save_document', {
+                            path: newPath,
+                            newName: fileName,
+                            new_name: fileName,
+                            content: text
                         });
-                        setFileHandle(handle);
+
+                        setFilePath(returnedPath);
+                        setSavedText(text);
+                        setSavedTitle(fileName);
+                        setIsFileTracked(true);
+
+                        if (onNewFileSaved) {
+                            onNewFileSaved(returnedPath, fileName);
+                        }
                     }
-                    const writable = await handle.createWritable();
-                    await writable.write(text);
-                    await writable.close();
-
-                    const actualFileName = handle.name.replace(/\.floxt$/i, "");
-                    setSavedText(text);
-                    setSavedTitle(actualFileName);
-                    setTitle(actualFileName);
-                    setIsFileTracked(true);
-                    return;
+                } catch (error) {
+                    console.error("Failed to save new file:", error);
                 }
-            } catch (err: any) {
-                if (err.name === 'AbortError') return;
+                return;
             }
-
-            const blob = new Blob([text], { type: "text/plain" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${fileName}.floxt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            setSavedText(text);
-            setSavedTitle(fileName);
-            setIsFileTracked(true);
         }
 
     }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath]);
@@ -220,6 +230,14 @@ export default function PanelLayout({
                     e.preventDefault();
                     e.stopPropagation();
                     handleNew();
+                } else if (e.key.toLowerCase() === 'p') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (onOpenProject) onOpenProject();
+                } else if (e.key.toLowerCase() === 'i') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsImportOpen(prev => !prev);
                 } else if (e.key.toLowerCase() === 'c') {
                     e.preventDefault();
                     e.stopPropagation();
@@ -250,7 +268,7 @@ export default function PanelLayout({
 
         window.addEventListener('keydown', handleKeyDown, { capture: true });
         return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
-    }, [handleNew, handleSave, handleOpenClick, setViewMode]);
+    }, [handleNew, handleSave, handleOpenClick, setViewMode, onOpenProject]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -273,19 +291,59 @@ export default function PanelLayout({
         e.target.value = "";
     };
 
+    const handleImport = useCallback((importedTitle: string, importedContent: string) => {
+        setText(importedContent);
+        setTitle(importedTitle);
+        setSavedText("");
+        setSavedTitle("");
+        setIsFileTracked(false);
+        setFileHandle(null);
+        setFilePath(null);
+        setIsImportOpen(false);
+    }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked, setFilePath]);
+
     return (
         <div className="sticky top-4 self-start flex flex-col gap-2 w-fit h-fit items-center z-50">
-            <section className={`p-3 h-fit bg-white dark:bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg`}>
+            {projectName && isOpen && (
+                <section className="p-3 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg w-full flex flex-col gap-2 shadow-sm">
+                    <h3 className="font-bold text-neutral-800 dark:text-white border-b border-neutral-200 dark:border-neutral-800 pb-2 mb-1 truncate" title={projectName}>
+                        {projectName}
+                    </h3>
+                    <div className="flex flex-col gap-1 max-h-[30vh] overflow-y-auto pr-1">
+                        {projectFiles?.map((file, idx) => (
+                            <div key={idx} className="flex items-center justify-between group text-sm p-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 rounded transition-colors">
+                                <div className="flex items-center gap-2 overflow-hidden pr-2">
+                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${file.hasUnsavedChanges ? 'bg-yellow-500' : 'bg-transparent'}`} />
+                                    <span className="truncate text-neutral-700 dark:text-neutral-300 font-medium">{file.name}</span>
+                                </div>
+                                <div className="flex gap-1.5">
+                                    <button onClick={() => onOpenFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-600 dark:text-neutral-300 transition-colors shadow-sm">
+                                        Open <SquareArrowOutUpRight size={10} strokeWidth={3} />
+                                    </button>
+                                    <button onClick={() => onSaveFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-600 dark:text-neutral-300 transition-colors shadow-sm">
+                                        Save <Save size={10} strokeWidth={3} />
+                                    </button>
+                                    <button onClick={() => onDeleteFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-red-200 dark:border-red-900/50 bg-white dark:bg-neutral-800 hover:bg-red-50 dark:hover:bg-red-950/50 rounded text-[10px] font-bold text-red-600 dark:text-red-400 transition-colors shadow-sm">
+                                        <Trash size={10} strokeWidth={3} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            <section className={`p-3 h-fit bg-white dark:bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm`}>
 
                 <input type="file" accept=".floxt" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />
 
                 {isOpen && (
-                    <div className={`overflow-hidden transition-all duration-150 ease-in-out flex flex-col ${isOpen ? 'max-h-[500px] max-w-[300px] opacity-100' : 'max-h-0 max-w-0 opacity-0'}`}>
+                    <div className={`overflow-hidden transition-all duration-150 ease-in-out flex flex-col ${isOpen ? 'max-h-[600px] max-w-[300px] opacity-100' : 'max-h-0 max-w-0 opacity-0'}`}>
 
                         <button onClick={handleNew} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Plus size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">New</p>
+                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">New note</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+N</span>}
                             </div>
                         </button>
@@ -293,21 +351,37 @@ export default function PanelLayout({
                         <button onClick={handleSave} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Save size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Save</p>
+                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Save note</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Ctrl+S</span>}
                             </div>
                         </button>
 
                         <button onClick={handleOpenClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <FolderOpen size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <SquareArrowOutUpRight size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Open</p>
+                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Open note</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Ctrl+O</span>}
                             </div>
                         </button>
 
+                        <button onClick={onOpenProject} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
+                            <Library size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <div className="flex flex-col items-start m-2 mr-5">
+                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Open project</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+P</span>}
+                            </div>
+                        </button>
+
+                        <button onClick={() => setIsImportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
+                            <Upload size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <div className="flex flex-col items-start m-2 mr-5">
+                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Import</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+I</span>}
+                            </div>
+                        </button>
+
                         <button onClick={() => setIsExportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Download size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Download size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Export</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+E</span>}
@@ -315,7 +389,7 @@ export default function PanelLayout({
                         </button>
 
                         <button onClick={() => setIsCommandsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Terminal size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Terminal size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Commands</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+C</span>}
@@ -323,7 +397,7 @@ export default function PanelLayout({
                         </button>
 
                         <button onClick={() => setIsSettingsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Cog size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Cog size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Settings</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+S</span>}
@@ -369,7 +443,7 @@ export default function PanelLayout({
                     title="Alt+2"
                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'split' ? 'border border-neutral-400 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border border-transparent'}`}
                 >
-                    <Columns size={isOpen ? 18 : 22}/>
+                    <Columns size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Split view</span>
@@ -401,6 +475,7 @@ export default function PanelLayout({
                 </div>
             )}
 
+            <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleImport} />
             <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} text={text} title={title} />
 
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">

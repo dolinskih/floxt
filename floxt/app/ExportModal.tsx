@@ -80,7 +80,10 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
     };
 
     const generateHTML = () => {
-        let html = text;
+        let html = text
+            .replace(/&/g, '__FLXT_AMP__')
+            .replace(/</g, '__FLXT_LT__')
+            .replace(/>/g, '__FLXT_GT__');
         let previous;
 
         do {
@@ -108,8 +111,8 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                         return `<ol>\n${listItems}\n</ol>`;
                     }
                     case 'code': {
-                        const safeCode = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        return `<pre><code>${safeCode}</code></pre>`;
+                        const cleanContent = content.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
+                        return `<pre><code>${cleanContent}</code></pre>`;
                     }
 
                     case 'table': {
@@ -141,6 +144,11 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
 
         html = html.replace(/\/\[\];/g, '<input type="checkbox" disabled />');
         html = html.replace(/\/\[x\];/gi, '<input type="checkbox" checked disabled />');
+
+        html = html
+            .replace(/__FLXT_AMP__/g, '&amp;')
+            .replace(/__FLXT_LT__/g, '&lt;')
+            .replace(/__FLXT_GT__/g, '&gt;');
 
         return `
 <!DOCTYPE html>

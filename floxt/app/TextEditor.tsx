@@ -250,6 +250,27 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     const handleReadViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.target as HTMLElement;
 
+        const copyBtn = target.closest('.floxt-copy-btn') as HTMLButtonElement;
+        if (copyBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const codeToCopy = copyBtn.getAttribute('data-code');
+            if (codeToCopy) {
+                navigator.clipboard.writeText(decodeURIComponent(codeToCopy)).then(() => {
+                    const originalText = copyBtn.innerText;
+                    copyBtn.innerText = "Copied!";
+                    copyBtn.classList.add("text-emerald-600", "dark:text-emerald-400");
+
+                    setTimeout(() => {
+                        copyBtn.innerText = originalText;
+                        copyBtn.classList.remove("text-emerald-600", "dark:text-emerald-400");
+                    }, 2000);
+                });
+            }
+            return;
+        }
+
         const anchor = target.closest('a');
         if (anchor && anchor.href) {
             e.preventDefault();
@@ -310,7 +331,10 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     };
 
     const parseFloxt = (rawText: string) => {
-        let parsed = rawText;
+        let parsed = rawText
+            .replace(/&/g, '__FLXT_AMP__')
+            .replace(/</g, '__FLXT_LT__')
+            .replace(/>/g, '__FLXT_GT__');
         let previous;
 
         do {
@@ -342,8 +366,16 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     }
 
                     case 'code': {
-                        const safeCode = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        return `<code class="bg-neutral-100 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 text-emerald-600 dark:text-emerald-400 font-mono px-2 py-1 rounded text-sm">${safeCode}</code>`;
+                        let cleanContent = content.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
+
+                        const rawCode = cleanContent
+                            .replace(/__FLXT_LT__/g, '<')
+                            .replace(/__FLXT_GT__/g, '>')
+                            .replace(/__FLXT_AMP__/g, '&');
+
+                        const dataCode = encodeURIComponent(rawCode);
+
+                        return `<div class="relative group my-4 rounded-lg overflow-hidden border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-950"><button class="floxt-copy-btn absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 px-2 py-1 text-xs font-medium rounded-md bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm cursor-pointer whitespace-nowrap" data-code="${dataCode}">Copy</button><pre class="p-4 overflow-x-auto text-sm m-0"><code class="text-emerald-600 dark:text-emerald-400 font-mono bg-transparent border-none p-0">${cleanContent}</code></pre></div>`;
                     }
 
                     case 'table': {
@@ -386,6 +418,11 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             cbIndex++;
             return html;
         });
+
+        parsed = parsed
+            .replace(/__FLXT_AMP__/g, '&amp;')
+            .replace(/__FLXT_LT__/g, '&lt;')
+            .replace(/__FLXT_GT__/g, '&gt;');
 
         return parsed;
     };

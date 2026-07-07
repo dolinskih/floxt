@@ -79,8 +79,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
         triggerDownload(md, `${fileName}.md`, "text/markdown");
     };
 
-    // --- FLOXT TO HTML PARSER ---
-    const exportToHtml = () => {
+    const generateHTML = () => {
         let html = text;
         let previous;
 
@@ -143,7 +142,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
         html = html.replace(/\/\[\];/g, '<input type="checkbox" disabled />');
         html = html.replace(/\/\[x\];/gi, '<input type="checkbox" checked disabled />');
 
-        const fullHtmlDocument = `
+        return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -166,14 +165,49 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
             th, td { border-color: #262626; }
             th { background-color: #171717; }
         }
+
+        @media print {
+            @page { margin: 0; } 
+            body { background-color: white !important; color: black !important; margin: 0; padding: 0.5in; }
+            pre { background: #f4f4f4 !important; border-color: #ccc !important; }
+            a { color: #2563eb !important; text-decoration: none; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+        }
     </style>
 </head>
 <body>
 ${html}
 </body>
-</html>`;
+</html>`.trim();
+    };
 
-        triggerDownload(fullHtmlDocument.trim(), `${fileName}.html`, "text/html");
+    const exportToHtml = () => {
+        triggerDownload(generateHTML(), `${fileName}.html`, "text/html");
+    };
+
+    const exportToPdf = () => {
+        const htmlContent = generateHTML();
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (iframeDoc) {
+            iframeDoc.open();
+            iframeDoc.write(htmlContent);
+            iframeDoc.close();
+        }
+
+        setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                onClose();
+            }, 100);
+        }, 250);
     };
 
     const triggerDownload = (content: string, filename: string, mimeType: string) => {
@@ -217,6 +251,19 @@ ${html}
                     <div className="flex flex-col items-start">
                         <span className="text-neutral-900 dark:text-gray-200 font-bold text-base">Web Page (.html)</span>
                         <span className="text-neutral-500 dark:text-neutral-400 text-xs">A styled, readable web document.</span>
+                    </div>
+                </button>
+
+                <button
+                    onClick={exportToPdf}
+                    className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors group cursor-pointer"
+                >
+                    <div className="bg-white dark:bg-neutral-900 p-2 rounded text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white border border-neutral-200 dark:border-transparent transition-colors">
+                        <Download size={20} />
+                    </div>
+                    <div className="flex flex-col items-start">
+                        <span className="text-neutral-900 dark:text-gray-200 font-bold text-base">PDF Document (.pdf)</span>
+                        <span className="text-neutral-500 dark:text-neutral-400 text-xs">Print or save as a standard PDF file.</span>
                     </div>
                 </button>
             </div>

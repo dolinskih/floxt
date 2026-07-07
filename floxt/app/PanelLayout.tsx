@@ -6,6 +6,7 @@ import Modal from "./Modal";
 import ExportModal from "./ExportModal";
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
+import ImportModal from './ImportModal';
 
 export interface ProjectFile {
     name: string;
@@ -79,6 +80,7 @@ export default function PanelLayout({
     const [isCommandsOpen, setIsCommandsOpen] = useState<boolean>(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
     const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
+    const [isImportOpen, setIsImportOpen] = useState<boolean>(false);
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
@@ -231,6 +233,10 @@ export default function PanelLayout({
                     e.preventDefault();
                     e.stopPropagation();
                     if (onOpenProject) onOpenProject();
+                } else if (e.key.toLowerCase() === 'i') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsImportOpen(prev => !prev);
                 } else if (e.key.toLowerCase() === 'c') {
                     e.preventDefault();
                     e.stopPropagation();
@@ -283,6 +289,17 @@ export default function PanelLayout({
         reader.readAsText(file);
         e.target.value = "";
     };
+
+    const handleImport = useCallback((importedTitle: string, importedContent: string) => {
+        setText(importedContent);
+        setTitle(importedTitle);
+        setSavedText("");
+        setSavedTitle("");
+        setIsFileTracked(false);
+        setFileHandle(null);
+        setFilePath(null);
+        setIsImportOpen(false);
+    }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked, setFilePath]);
 
     return (
         <div className="sticky top-4 self-start flex flex-col gap-2 w-fit h-fit items-center z-50">
@@ -354,10 +371,11 @@ export default function PanelLayout({
                             </div>
                         </button>
 
-                        <button onClick={() => { }} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
+                        <button onClick={() => setIsImportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Upload size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
                                 <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Import</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+I</span>}
                             </div>
                         </button>
 
@@ -456,6 +474,7 @@ export default function PanelLayout({
                 </div>
             )}
 
+            <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleImport} />
             <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} text={text} title={title} />
 
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">

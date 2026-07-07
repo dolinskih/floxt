@@ -33,6 +33,10 @@ export default function ImportModal({ isOpen, onClose, onImport }: ImportModalPr
         // Strikethrough: ~~text~~
         floxt = floxt.replace(/~~(.*?)~~/g, '/s;$1;/');
 
+        // Highlight
+        floxt = floxt.replace(/==(.*?)==/g, '/h;$1;/');
+        floxt = floxt.replace(/<mark>(.*?)<\/mark>/gi, '/h;$1;/');
+
         // 3. Media and Links
         // Images: ![alt](url) -> /img;url;alt;/
         floxt = floxt.replace(/!\[(.*?)\]\((.*?)\)/g, '/img;$2;$1;/');

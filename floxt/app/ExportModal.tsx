@@ -21,7 +21,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
 
         do {
             previous = md;
-            md = md.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, tag, content) => {
+            md = md.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
                 switch (tag) {
                     case 'h1': return `# ${content}`;
                     case 'h2': return `## ${content}`;
@@ -33,6 +33,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                     case 'i': return `*${content}*`;
                     case 'u': return `<u>${content}</u>`;
                     case 's': return `~~${content}~~`;
+                    case 'h': return `==${content}==`;
                     case '-': {
                         const cleanContent = content.trim();
                         return cleanContent.replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '- $1\n') + '\n';
@@ -85,7 +86,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
 
         do {
             previous = html;
-            html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, tag, content) => {
+            html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
                 switch (tag) {
                     case 'h1': return `<h1>${content}</h1>`;
                     case 'h2': return `<h2>${content}</h2>`;
@@ -97,6 +98,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                     case 'i': return `<em>${content}</em>`;
                     case 'u': return `<u>${content}</u>`;
                     case 's': return `<del>${content}</del>`;
+                    case 'h': return `<mark>${content}</mark>`;
                     case '-': {
                         const listItems = content.trim().replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li>$1</li>');
                         return `<ul>\n${listItems}\n</ul>`;

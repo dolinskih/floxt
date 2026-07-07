@@ -60,6 +60,7 @@ const commandsData = [
     { icon: "I", name: "Italic", open: "/i;", close: ";/" },
     { icon: "U", name: "Underline", open: "/u;", close: ";/" },
     { icon: "S", name: "Strike-through", open: "/s;", close: ";/" },
+    { icon: "🖍️", name: "Highlight", open: "/h;", close: ";/ "},
     { icon: "•", name: "Unordered list block", open: "/-;", close: ";/" },
     { icon: "1²3", name: "Ordered list block", open: "/0;", close: ";/" },
     { icon: "☐", name: "Unchecked checkbox", open: "/[];", close: "None" },

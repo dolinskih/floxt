@@ -11,18 +11,23 @@ Fast and capable note-taking app.
 ### Desktop app
 Go to the [Releases page](https://github.com/dolinskih/floxt/releases/latest) of the repository and choose Floxt either for Windows or Linux!
 ### Development environment
-1. On your system, install Node.js and npm.
+1. On your system, install Node.js, npm and Rust.
 2. Download Floxt repository and open floxt folder in the terminal.
 3. Run `npm install` in the terminal.
 
 **All needed files are now installed!**
 
 ## Running development environment
-To run the development environment of the app run `npm run dev` in the terminal.
+- To run in web browser use `npm run dev`.
+- To run in desktop application use `npx tauri dev`.
 
-## Running public environment
+## Running public environment (build)
+### Web app
 1. Create app build using `npm run build` in the terminal.
 2. Run the app using `npm run start` in the terminal.
+### Desktop app
+1. Create app build using `npx tauri build` in the terminal.
+2. Install the app using the generated installer.
 
 ## Floxt usage tips
 - **Use Floxt without server running:** To use app offline install Floxt as a web app using Install option in the menu panel or in your browser's options.

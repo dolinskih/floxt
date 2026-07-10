@@ -382,7 +382,7 @@ mod tests {
         // ASSERT: Got error from trying to delete a missing file
         assert!(result_failure.is_err(), "Function should return an error when deleting a missing file.");
 
-        // Clean up temporary directory
+        // Clean up temporary directory 
         fs::remove_dir_all(&temp_dir).unwrap();
     }
 }

@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Floxt
+Fast and capable note-taking app.
 
-## Getting Started
+![Floxt logo](https://github.com/dolinskih/floxt/blob/main/floxt/src-tauri/icons/128x128%402x.png)
 
-First, run the development server:
+**Current release version**: 0.3 (Pre-release)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**Current development version**: 0.4 (Pre-release)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Installation
+### Desktop app
+Go to the [Releases page](https://github.com/dolinskih/floxt/releases/latest) of the repository and choose Floxt either for Windows or Linux!
+### Development environment
+1. On your system, install Node.js, npm and Rust.
+2. Download Floxt repository and open floxt folder in the terminal.
+3. Run `npm install` in the terminal.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**All needed files are now installed!**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Running development environment
+- To run in web browser use `npm run dev`.
+- To run in desktop application use `npx tauri dev`.
 
-## Learn More
+## Running public environment (build)
+### Web app
+1. Create app build using `npm run build` in the terminal.
+2. Run the app using `npm run start` in the terminal.
+### Desktop app
+1. Create app build using `npx tauri build` in the terminal.
+2. Install the app using the generated installer.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Floxt usage tips
+- **Use Floxt without server running:** To use app offline install Floxt as a web app using Install option in the menu panel or in your browser's options.
+- All available code commands are available in Commands option in the menu panel.
+- You can auto-save your open notes after turning on Auto-save option in Settings option in the menu panel.
+- You can interact with the notes in the Read View by checking the checkboxes or by Ctrl+Click on any element, to quickly find it in the Code View.
+- Table command usage example:
+  ```
+  /table;
+  Name | Price | Amount
+  Apple | 1.99 | 10
+  Orange | 2.49 | 8
+  ;/
+  ```
+- Image command usage example: `/img;https://some-image-url.com/image.jpg;Image caption;/`
+- Link command usage example: `/link;https://some-url.com;Link caption;/`

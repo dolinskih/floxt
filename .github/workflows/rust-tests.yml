@@ -1,0 +1,37 @@
+name: Rust Backend Tests
+
+on:
+    push:
+        paths:
+            - 'floxt/src-tauri/**'
+    pull_request:
+        paths:
+            - 'floxt/src-tauri/**'
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+
+        defaults:
+            run:
+                working-directory: ./floxt/src-tauri
+        
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Install System Dependencies
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+            - name: Setup Rust Toolchain
+              uses: dtolnay/rust-toolchain@stable
+
+            - name: Rust Cache
+              uses: Swatinem/rust-cache@v2
+              with:
+                workspaces: "./floxt/src-tauri"
+
+            - name: Run Cargo Test
+              run: cargo test

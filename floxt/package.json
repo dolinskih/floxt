@@ -12,6 +12,8 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-log": "^2.8.0",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",

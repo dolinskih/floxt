@@ -3,10 +3,10 @@ name: Rust Backend Tests
 on:
     push:
         paths:
-            - 'floxt/src-tauri/**'
+            - 'src-tauri/**'
     pull_request:
         paths:
-            - 'floxt/src-tauri/**'
+            - 'src-tauri/**'
 
 jobs:
     test:
@@ -14,7 +14,7 @@ jobs:
 
         defaults:
             run:
-                working-directory: ./floxt/src-tauri
+                working-directory: ./src-tauri
         
         steps:
             - name: Checkout repository
@@ -31,7 +31,7 @@ jobs:
             - name: Rust Cache
               uses: Swatinem/rust-cache@v2
               with:
-                workspaces: "./floxt/src-tauri"
+                workspaces: "./src-tauri"
 
             - name: Run Cargo Test
               run: cargo test

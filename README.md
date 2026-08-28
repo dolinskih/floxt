@@ -12,7 +12,7 @@ Fast and capable note-taking app.
 Go to the [Releases page](https://github.com/dolinskih/floxt/releases/latest) of the repository and choose Floxt either for Windows or Linux!
 ### Development environment
 1. On your system, install Node.js, npm and Rust.
-2. Download Floxt repository and open floxt folder in the terminal.
+2. Download Floxt repository and open its folder in the terminal.
 3. Run `npm install` in the terminal.
 
 **All needed files are now installed!**

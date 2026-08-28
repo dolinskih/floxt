@@ -3,9 +3,9 @@ Fast and capable note-taking app.
 
 ![Floxt logo](https://github.com/dolinskih/floxt/blob/version-0.4/src-tauri/icons/128x128%402x.png)
 
-**Current release version**: 0.3 (Pre-release)
+**Current release version**: 0.4 (Pre-release)
 
-**Current development version**: 0.4 (Pre-release)
+**Current development version**: 1.0
 
 ## Installation
 ### Desktop app

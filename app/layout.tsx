@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cascadia_Code } from "next/font/google";
+import { SettingsProvider } from "./contexts/SettingsContext";
 import "./globals.css";
 
 const cascadiaCode = Cascadia_Code({
@@ -27,7 +28,9 @@ export default function RootLayout({
       <body
         className={`${cascadiaCode.variable} bg-transparent text-neutral-900 dark:text-white`}
       >
-        {children}
+        <SettingsProvider>
+          {children}
+        </SettingsProvider>
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import ExportModal from "./ExportModal";
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
 import ImportModal from './ImportModal';
+import { useSettings } from './contexts/SettingsContext';
 
 export interface ProjectFile {
     name: string;
@@ -14,6 +15,7 @@ export interface ProjectFile {
     hasUnsavedChanges: boolean;
 }
 
+// Notice how clean the props interface is now!
 interface PanelLayoutProps {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
@@ -24,20 +26,6 @@ interface PanelLayoutProps {
     hasUnsavedChanges: boolean;
     isFileTracked: boolean;
     setIsFileTracked: React.Dispatch<React.SetStateAction<boolean>>;
-    viewMode: 'code' | 'read' | 'split';
-    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read' | 'split'>>;
-    fontSize: number;
-    setFontSize: React.Dispatch<React.SetStateAction<number>>;
-    showLineNumbers: boolean;
-    setShowLineNumbers: React.Dispatch<React.SetStateAction<boolean>>;
-    autoSave: boolean;
-    setAutoSave: React.Dispatch<React.SetStateAction<boolean>>;
-    showShortcuts: boolean;
-    setShowShortcuts: React.Dispatch<React.SetStateAction<boolean>>;
-    theme: 'light' | 'dark' | 'system';
-    setTheme: React.Dispatch<React.SetStateAction<'light' | 'dark' | 'system'>>;
-    panelPosition: 'left' | 'right';
-    setPanelPosition: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
     filePath: string | null;
     setFilePath: React.Dispatch<React.SetStateAction<string | null>>;
     projectName?: string | null;
@@ -60,7 +48,7 @@ const commandsData = [
     { icon: "I", name: "Italic", open: "/i;", close: ";/" },
     { icon: "U", name: "Underline", open: "/u;", close: ";/" },
     { icon: "S", name: "Strike-through", open: "/s;", close: ";/" },
-    { icon: "🖍️", name: "Highlight", open: "/h;", close: ";/ "},
+    { icon: "🖍️", name: "Highlight", open: "/h;", close: ";/ " },
     { icon: "•", name: "Unordered list block", open: "/-;", close: ";/" },
     { icon: "1²3", name: "Ordered list block", open: "/0;", close: ";/" },
     { icon: "☐", name: "Unchecked checkbox", open: "/[];", close: "None" },
@@ -72,8 +60,18 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition, filePath, setFilePath, projectName, projectFiles, onOpenProject, onOpenFileFromProject, onSaveFileFromProject, onNewFileSaved, onDeleteFileFromProject
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, filePath, setFilePath, projectName, projectFiles, onOpenProject, onOpenFileFromProject, onSaveFileFromProject, onNewFileSaved, onDeleteFileFromProject
 }: PanelLayoutProps) {
+    const {
+        viewMode, setViewMode,
+        fontSize, setFontSize,
+        showLineNumbers, setShowLineNumbers,
+        autoSave, setAutoSave,
+        showShortcuts, setShowShortcuts,
+        theme, setTheme,
+        panelPosition, setPanelPosition
+    } = useSettings();
+
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -135,13 +133,13 @@ export default function PanelLayout({
                 console.error("Failed to save:", error);
             }
         } else {
-            const fileName = title.trim() === "" ? "Untitled" : title;
+            const fileName = title.trim() === "" ? "" : title;
 
             if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
                 try {
                     const newPath = await save({
                         title: 'Save New Note',
-                        defaultPath: `${fileName}.floxt`,
+                        defaultPath: fileName ? `${fileName}.floxt` : ``,
                         filters: [{ name: 'Floxt File', extensions: ['floxt'] }]
                     });
 
@@ -169,7 +167,7 @@ export default function PanelLayout({
             }
         }
 
-    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath]);
+    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath, onNewFileSaved]);
 
     useEffect(() => {
         if (autoSave && isFileTracked && (fileHandle || filePath) && hasUnsavedChanges) {

@@ -4,8 +4,7 @@ import { Plus, SquareArrowOutUpRight, Terminal, Cog, ChevronUp, ChevronDown, Sav
 import { useState, useRef, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 import ExportModal from "./ExportModal";
-import { invoke } from '@tauri-apps/api/core';
-import { save } from '@tauri-apps/plugin-dialog';
+import { fileService } from './services/fileService';
 import ImportModal from './ImportModal';
 import { useSettings } from './contexts/SettingsContext';
 
@@ -116,12 +115,7 @@ export default function PanelLayout({
     const handleSave = useCallback(async () => {
         if (filePath) {
             try {
-                const returnedPath = await invoke<string>('save_document', {
-                    path: filePath,
-                    newName: title,
-                    new_name: title,
-                    content: text
-                });
+                const returnedPath = await fileService.saveDocument(filePath, title, text);
 
                 if (returnedPath !== filePath) {
                     setFilePath(returnedPath);
@@ -133,23 +127,13 @@ export default function PanelLayout({
                 console.error("Failed to save:", error);
             }
         } else {
-            const fileName = title.trim() === "" ? "" : title;
-
             if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
                 try {
-                    const newPath = await save({
-                        title: 'Save New Note',
-                        defaultPath: fileName ? `${fileName}.floxt` : ``,
-                        filters: [{ name: 'Floxt File', extensions: ['floxt'] }]
-                    });
+                    const newPath = await fileService.saveNewNoteDialog(title);
 
                     if (newPath) {
-                        const returnedPath = await invoke<string>('save_document', {
-                            path: newPath,
-                            newName: fileName,
-                            new_name: fileName,
-                            content: text
-                        });
+                        const fileName = title.trim() === "" ? "" : title;
+                        const returnedPath = await fileService.saveDocument(newPath, fileName, text);
 
                         setFilePath(returnedPath);
                         setSavedText(text);
@@ -166,7 +150,6 @@ export default function PanelLayout({
                 return;
             }
         }
-
     }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath, onNewFileSaved]);
 
     useEffect(() => {

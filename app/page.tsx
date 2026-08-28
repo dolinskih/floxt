@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import PanelLayout from "./PanelLayout";
 import TextEditor from "./TextEditor";
 import NoteTitle from "./NoteTitle";
-import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
+import { fileService } from "./services/fileService";
 import ConfirmModal from "./ConfirmModal";
 import { useSettings } from "./contexts/SettingsContext";
 
@@ -49,7 +48,7 @@ export default function Home() {
                 return;
             }
 
-            const fileContent = await invoke<string>('read_document', { path: targetPath });
+            const fileContent = await fileService.readDocument(targetPath);
             const fileName = targetPath.split(/[\\/]/).pop()?.replace(/\.floxt$/i, '') || 'Unknown';
 
             setText(fileContent);
@@ -98,18 +97,14 @@ export default function Home() {
 
     const handleOpenProject = async () => {
         try {
-            const selectedDir = await open({
-                directory: true,
-                multiple: false,
-                title: 'Open Floxt Project Folder'
-            });
+            const selectedDir = await fileService.openProjectDialog();
 
             if (selectedDir) {
                 const folderName = (selectedDir as string).split(/[\\/]/).pop() || 'Project';
                 setProjectName(folderName);
                 setProjectPath(selectedDir as string);
 
-                const files = await invoke<{ name: string, path: string }[]>('read_project_dir', { dirPath: selectedDir });
+                const files = await fileService.readProjectDir(selectedDir);
                 setProjectFiles(files);
 
                 setActiveFiles([]);
@@ -143,12 +138,7 @@ export default function Home() {
                 return;
             }
 
-            const returnedPath = await invoke<string>('save_document', {
-                path: targetPath,
-                newName: titleToSave,
-                new_name: titleToSave,
-                content: contentToSave
-            });
+            const returnedPath = await fileService.saveDocument(targetPath, titleToSave, contentToSave);
 
             if (returnedPath !== targetPath) {
                 if (targetPath === filePath) setFilePath(returnedPath);
@@ -235,7 +225,7 @@ export default function Home() {
         const targetPath = fileToDelete;
 
         try {
-            await invoke('delete_document', { path: targetPath });
+            await fileService.deleteDocument(targetPath);
 
             setProjectFiles(prev => prev.filter(f => f.path !== targetPath));
             setActiveFiles(prev => prev.filter(f => f.path !== targetPath));
@@ -283,7 +273,7 @@ export default function Home() {
             }
 
             try {
-                const fileData = await invoke<{ name: string, content: string, path: string } | null>('get_initial_file');
+                const fileData = await fileService.getInitialFile();
 
                 if (fileData) {
                     setText(fileData.content);

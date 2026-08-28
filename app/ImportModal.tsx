@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import Modal from './Modal';
 import { FileUp } from 'lucide-react';
+import { convertMarkdownToFloxt } from './utils/floxtParser';
 
 interface ImportModalProps {
     isOpen: boolean;
@@ -13,68 +14,6 @@ interface ImportModalProps {
 export default function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
-
-    const convertMarkdownToFloxt = (md: string): string => {
-        let floxt = md;
-
-        // 1. Multi-line blocks (Code)
-        floxt = floxt.replace(/```([\s\S]*?)```/g, (match, p1) => {
-            return `/code;\n${p1.trim()}\n;/`;
-        });
-
-        // 2. Inline styling
-        floxt = floxt.replace(/\*\*(.*?)\*\*/g, '/b;$1;/');
-        floxt = floxt.replace(/__(.*?)__/g, '/b;$1;/');
-
-        // Italic: *text* or _text_
-        floxt = floxt.replace(/\*(.*?)\*/g, '/i;$1;/');
-        floxt = floxt.replace(/_(.*?)_/g, '/i;$1;/');
-
-        // Strikethrough: ~~text~~
-        floxt = floxt.replace(/~~(.*?)~~/g, '/s;$1;/');
-
-        // Highlight
-        floxt = floxt.replace(/==(.*?)==/g, '/h;$1;/');
-        floxt = floxt.replace(/<mark>(.*?)<\/mark>/gi, '/h;$1;/');
-
-        // 3. Media and Links
-        // Images: ![alt](url) -> /img;url;alt;/
-        floxt = floxt.replace(/!\[(.*?)\]\((.*?)\)/g, '/img;$2;$1;/');
-
-        // Links: [text](url) -> /link;url;text;/
-        floxt = floxt.replace(/\[(.*?)\]\((.*?)\)/g, '/link;$2;$1;/');
-
-        // 4. Line-by-line block elements (Headings, Lists, Checkboxes)
-        const lines = floxt.split('\n');
-        const processedLines = lines.map(line => {
-            // Headings (# through ######)
-            const hMatch = line.match(/^(#{1,6})\s+(.*)$/);
-            if (hMatch) {
-                const level = hMatch[1].length;
-                return `/h${level};${hMatch[2]};/`;
-            }
-
-            // Checkboxes (Unchecked: - [ ] text)
-            const uncheckedMatch = line.match(/^[\*\-]\s+\[\s\]\s+(.*)$/);
-            if (uncheckedMatch) return `/[];${uncheckedMatch[1]}`;
-
-            // Checkboxes (Checked: - [x] text)
-            const checkedMatch = line.match(/^[\*\-]\s+\[[xX]\]\s+(.*)$/);
-            if (checkedMatch) return `/[x];${checkedMatch[1]}`;
-
-            // Unordered Lists (- text or * text)
-            const ulMatch = line.match(/^[\*\-]\s+(.*)$/);
-            if (ulMatch) return `/-;${ulMatch[1]};/`;
-
-            // Ordered Lists (1. text)
-            const olMatch = line.match(/^\d+\.\s+(.*)$/);
-            if (olMatch) return `/0;${olMatch[1]};/`;
-
-            return line;
-        });
-
-        return processedLines.join('\n');
-    };
 
     const processFile = (file: File) => {
         const validExtensions = ['.md', '.txt', '.floxt'];

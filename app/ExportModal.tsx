@@ -1,4 +1,4 @@
-"use client";
+"use client"; // Flags the component to run exclusively on the client.
 
 import React from "react";
 import Modal from "./Modal";
@@ -6,6 +6,7 @@ import { Download } from "lucide-react";
 import { generateHTML, convertFloxtToMarkdown, triggerDownload } from "./utils/floxtParser";
 import { mdxCompile } from "next/dist/build/swc/generated-native";
 
+// Sets up the properties needed to access the raw text and proposed file title.
 interface ExportModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -14,12 +15,15 @@ interface ExportModalProps {
 }
 
 export default function ExportModal({ isOpen, onClose, text, title }: ExportModalProps) {
+    // Ensures a valid fallback filename is used if the title is empty.
     const fileName = title.trim() === "" ? "Exported_Note" : title;
 
+    // Handles generating a web document and prompting a download.
     const exportToHtml = () => {
         triggerDownload(generateHTML(text, fileName), `${fileName}.html`, "text/html");
     };
 
+    // Creates an invisible iframe to render the HTML document and triggers the browser's print-to-PDF dialog.
     const exportToPdf = () => {
         const htmlContent = generateHTML(text, fileName);
         const iframe = document.createElement('iframe');
@@ -44,6 +48,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
         }, 250);
     };
 
+    // Handles parsing the note into standard markdown and prompting a download.
     const exportToMarkdown = () => {
         const md = convertFloxtToMarkdown(text);
         triggerDownload(md, `${fileName}.md`, "text/markdown");
@@ -54,6 +59,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
             <div className="flex flex-col gap-4">
                 <p className="text-neutral-600 dark:text-neutral-400 mb-2">Choose a format to export your file:</p>
 
+                {/* Markdown Export Option */}
                 <button
                     onClick={exportToMarkdown}
                     className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors group cursor-pointer"
@@ -67,6 +73,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                     </div>
                 </button>
 
+                {/* HTML Export Option */}
                 <button
                     onClick={exportToHtml}
                     className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors group cursor-pointer"
@@ -80,6 +87,7 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                     </div>
                 </button>
 
+                {/* PDF Print Option */}
                 <button
                     onClick={exportToPdf}
                     className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors group cursor-pointer"

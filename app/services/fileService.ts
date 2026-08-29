@@ -1,6 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 
+// Abstracts all Tauri IPC (Inter-Process Communication) calls into a single service.
+// This decouples the React frontend from the Rust backend, making it easier to maintain,
+// mock for testing, or swap out for a web-based backend in the future.
 export const fileService = {
     // --- FILE OPERATIONS ---
     readDocument: async (path: string): Promise<string> => {
@@ -11,7 +14,7 @@ export const fileService = {
         return await invoke<string>('save_document', {
             path,
             newName,
-            new_name: newName,
+            new_name: newName, // Maintains backward compatibility with snake_case Rust struct definitions
             content
         });
     },
@@ -30,6 +33,7 @@ export const fileService = {
     },
 
     // --- DIALOG OPERATIONS ---
+    // Wraps Tauri's native OS folder selection dialog
     openProjectDialog: async (): Promise<string | null> => {
         const selectedDir = await open({
             directory: true,
@@ -39,6 +43,7 @@ export const fileService = {
         return selectedDir as string | null;
     },
 
+    // Wraps Tauri's native OS file save dialog, handling empty title fallbacks automatically
     saveNewNoteDialog: async (defaultTitle: string): Promise<string | null> => {
         const defaultPath = defaultTitle.trim() === "" ? "" : `${defaultTitle}.floxt`;
         

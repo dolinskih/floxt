@@ -1,24 +1,36 @@
 import { useState, useEffect } from 'react';
 import { fileService } from '../services/fileService';
 
+// Encapsulates all complex state management related to file buffering, project directories, 
+// and dirty-state tracking. This keeps the main UI components strictly focused on presentation.
 export function useProjectManager() {
+    // Active editor state
     const [text, setText] = useState<string>("");
     const [title, setTitle] = useState<string>("");
     const [filePath, setFilePath] = useState<string | null>(null);
+    
+    // Baseline state used to detect unsaved changes
     const [savedText, setSavedText] = useState<string>("");
     const [savedTitle, setSavedTitle] = useState<string>("");
 
+    // Project workspace state
     const [projectName, setProjectName] = useState<string | null>(null);
     const [projectPath, setProjectPath] = useState<string | null>(null);
     const [projectFiles, setProjectFiles] = useState<{ name: string, path: string }[]>([]);
+    
+    // Tab management and memory buffering to prevent losing unsaved data when switching files
     const [activeFiles, setActiveFiles] = useState<{ name: string, path: string }[]>([]);
     const [unsavedFilesTracker, setUnsavedFilesTracker] = useState<Record<string, boolean>>({});
     const [fileBuffers, setFileBuffers] = useState<Record<string, { text: string, title: string, savedText: string, savedTitle: string }>>({});
 
+    // Tracks if the current file exists on disk vs being a purely in-memory "New Note"
     const [isFileTracked, setIsFileTracked] = useState<boolean>(false);
+    
+    // Deletion modal state
     const [fileToDelete, setFileToDelete] = useState<string | null>(null);
     const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState<boolean>(false);
 
+    // Handles tab switching. Backs up the current file to memory before fetching the new one.
     const handleOpenFileFromProject = async (targetPath: string) => {
         try {
             if (filePath && filePath !== targetPath) {
@@ -59,6 +71,7 @@ export function useProjectManager() {
         }
     };
 
+    // Safely removes a file from the active workspace buffers without touching the disk
     const handleCloseTab = (targetPath: string) => {
         setActiveFiles(prev => prev.filter(f => f.path !== targetPath));
 
@@ -94,6 +107,7 @@ export function useProjectManager() {
                 const files = await fileService.readProjectDir(selectedDir);
                 setProjectFiles(files);
 
+                // Reset all workspace memory buffers for the new project
                 setActiveFiles([]);
                 setFileBuffers({});
                 setUnsavedFilesTracker({});
@@ -110,6 +124,8 @@ export function useProjectManager() {
         }
     };
 
+    // Routes the save request properly depending on whether the user is saving the active 
+    // tab or a background tab that only exists in the fileBuffers memory.
     const handleSaveFileFromProject = async (targetPath: string) => {
         try {
             let contentToSave = "";
@@ -212,6 +228,7 @@ export function useProjectManager() {
         try {
             await fileService.deleteDocument(fileToDelete);
 
+            // Clean up all memory arrays to reflect the disk deletion
             setProjectFiles(prev => prev.filter(f => f.path !== fileToDelete));
             setActiveFiles(prev => prev.filter(f => f.path !== fileToDelete));
 
@@ -241,6 +258,7 @@ export function useProjectManager() {
         }
     };
 
+    // Global dirty state tracker for the currently active tab
     useEffect(() => {
         if (filePath) {
             const isDirty = text !== savedText || title !== savedTitle;
@@ -248,6 +266,7 @@ export function useProjectManager() {
         }
     }, [text, title, savedText, savedTitle, filePath]);
 
+    // Checks if the OS passed a specific file path to the executable on startup
     useEffect(() => {
         const checkInitialFile = async () => {
             if (typeof window !== 'undefined' && !('__TAURI_INTERNALS__' in window)) return;

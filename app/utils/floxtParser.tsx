@@ -1,6 +1,7 @@
 import React from 'react';
 
 // --- 1. DOM UTILS ---
+// Creates a blob from text content and triggers an automatic browser download.
 export const triggerDownload = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -14,6 +15,7 @@ export const triggerDownload = (content: string, filename: string, mimeType: str
 };
 
 // --- 2. TEXT EDITOR PARSERS ---
+// Generates syntax-highlighted JSX spans for the raw text editor based on Floxt syntax.
 export const highlightFloxt = (rawText: string) => {
     const parts = rawText.split(/(\/(?:h[1-6]|h|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/|(?<=\/(?:link|img);[^;]*);)/gi);
 
@@ -22,6 +24,7 @@ export const highlightFloxt = (rawText: string) => {
 
     return parts.map((part, i) => {
         if (i % 2 !== 0) {
+            // Handles closing tags.
             if (part === ';/') {
                 complexTagState = 0;
                 if (openTagsCount > 0) {
@@ -32,11 +35,13 @@ export const highlightFloxt = (rawText: string) => {
                 }
             }
 
+            // Handles middle separators for complex tags like links or images.
             if (part === ';') {
                 if (complexTagState === 1) complexTagState = 2;
                 return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;</span>;
             }
 
+            // Applies specific styling colors to opening Floxt tags.
             const tagMatch = part.match(/^\/(.*);$/i);
             if (tagMatch) {
                 const tagName = tagMatch[1];
@@ -71,6 +76,7 @@ export const highlightFloxt = (rawText: string) => {
                 );
             }
         } else {
+            // Formats the metadata attributes of complex tags (URLs, descriptions).
             if (complexTagState === 1 && part === 'url') {
                 return <span key={i} className="text-neutral-500 dark:text-neutral-600 italic select-all">{part}</span>;
             }
@@ -83,7 +89,9 @@ export const highlightFloxt = (rawText: string) => {
     });
 };
 
+// Converts raw Floxt text into formatted HTML for the reader view.
 export const parseFloxt = (rawText: string) => {
+    // Sanitizes basic HTML entities to prevent unescaped rendering.
     let parsed = rawText
         .replace(/&/g, '__FLXT_AMP__')
         .replace(/</g, '__FLXT_LT__')
@@ -92,6 +100,7 @@ export const parseFloxt = (rawText: string) => {
 
     do {
         previous = parsed;
+        // Replaces standard Floxt markup with Tailwind-styled HTML elements.
         parsed = parsed.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
             switch (tag) {
                 case 'h1': return `<h1 class="text-4xl font-bold mt-4 mb-2">${content}</h1>`;
@@ -120,12 +129,10 @@ export const parseFloxt = (rawText: string) => {
 
                 case 'code': {
                     let cleanContent = content.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
-
                     const rawCode = cleanContent
                         .replace(/__FLXT_LT__/g, '<')
                         .replace(/__FLXT_GT__/g, '>')
                         .replace(/__FLXT_AMP__/g, '&');
-
                     const dataCode = encodeURIComponent(rawCode);
 
                     return `<div class="relative group my-4 rounded-lg overflow-hidden border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-950"><button class="floxt-copy-btn absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 px-2 py-1 text-xs font-medium rounded-md bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm cursor-pointer whitespace-nowrap" data-code="${dataCode}">Copy</button><pre class="p-4 overflow-x-auto text-sm m-0"><code class="text-emerald-600 dark:text-emerald-400 font-mono bg-transparent border-none p-0">${cleanContent}</code></pre></div>`;
@@ -134,10 +141,8 @@ export const parseFloxt = (rawText: string) => {
                 case 'table': {
                     const lines = content.trim().split(/\r?\n/);
                     if (lines.length === 0) return '';
-
                     const headers = lines[0].split('|').map((cell: string) => `<th class="border border-neutral-300 dark:border-neutral-700 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-left font-bold text-neutral-900 dark:text-white">${cell.trim()}</th>`).join('');
                     const thead = `<thead><tr>${headers}</tr></thead>`;
-
                     let tbody = '';
                     if (lines.length > 1) {
                         const rows = lines.slice(1).map((line: string) => {
@@ -146,7 +151,6 @@ export const parseFloxt = (rawText: string) => {
                         }).join('');
                         tbody = `<tbody>${rows}</tbody>`;
                     }
-
                     return `<div class="overflow-x-auto my-4 rounded border border-neutral-300 dark:border-neutral-700"><table class="w-full border-collapse text-sm text-neutral-900 dark:text-gray-200">${thead}${tbody}</table></div>`;
                 }
 
@@ -154,6 +158,7 @@ export const parseFloxt = (rawText: string) => {
             }
         });
 
+        // Processes complex tags (links and images) separately due to attribute requirements.
         parsed = parsed.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, url, placeholder) => {
             return `<a href="${url}" class="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline underline-offset-4 decoration-blue-600/50 dark:decoration-blue-400/50 transition-colors cursor-pointer">${placeholder}</a>`;
         });
@@ -164,6 +169,7 @@ export const parseFloxt = (rawText: string) => {
 
     } while (parsed !== previous);
 
+    // Converts interactive checklists.
     let cbIndex = 0;
     parsed = parsed.replace(/\/\[(x)?\];/gi, (match, checkedState) => {
         const isChecked = !!checkedState;
@@ -172,6 +178,7 @@ export const parseFloxt = (rawText: string) => {
         return html;
     });
 
+    // Restores safely escaped standard characters.
     parsed = parsed
         .replace(/__FLXT_AMP__/g, '&amp;')
         .replace(/__FLXT_LT__/g, '&lt;')
@@ -181,6 +188,7 @@ export const parseFloxt = (rawText: string) => {
 };
 
 // --- 3. IMPORT / EXPORT PARSERS ---
+// Replaces standard Markdown formatting with custom Floxt tags during imports.
 export const convertMarkdownToFloxt = (md: string): string => {
     let floxt = md;
 
@@ -189,51 +197,37 @@ export const convertMarkdownToFloxt = (md: string): string => {
         return `/code;\n${p1.trim()}\n;/`;
     });
 
-    // 2. Inline styling
+    // 2. Inline styling (Bold, italic, strikethrough, highlight)
     floxt = floxt.replace(/\*\*(.*?)\*\*/g, '/b;$1;/');
     floxt = floxt.replace(/__(.*?)__/g, '/b;$1;/');
-
-    // Italic: *text* or _text_
     floxt = floxt.replace(/\*(.*?)\*/g, '/i;$1;/');
     floxt = floxt.replace(/_(.*?)_/g, '/i;$1;/');
-
-    // Strikethrough: ~~text~~
     floxt = floxt.replace(/~~(.*?)~~/g, '/s;$1;/');
-
-    // Highlight
     floxt = floxt.replace(/==(.*?)==/g, '/h;$1;/');
     floxt = floxt.replace(/<mark>(.*?)<\/mark>/gi, '/h;$1;/');
 
     // 3. Media and Links
-    // Images: ![alt](url) -> /img;url;alt;/
     floxt = floxt.replace(/!\[(.*?)\]\((.*?)\)/g, '/img;$2;$1;/');
-
-    // Links: [text](url) -> /link;url;text;/
     floxt = floxt.replace(/\[(.*?)\]\((.*?)\)/g, '/link;$2;$1;/');
 
     // 4. Line-by-line block elements (Headings, Lists, Checkboxes)
     const lines = floxt.split('\n');
     const processedLines = lines.map(line => {
-        // Headings (# through ######)
         const hMatch = line.match(/^(#{1,6})\s+(.*)$/);
         if (hMatch) {
             const level = hMatch[1].length;
             return `/h${level};${hMatch[2]};/`;
         }
 
-        // Checkboxes (Unchecked: - [ ] text)
         const uncheckedMatch = line.match(/^[\*\-]\s+\[\s\]\s+(.*)$/);
         if (uncheckedMatch) return `/[];${uncheckedMatch[1]}`;
 
-        // Checkboxes (Checked: - [x] text)
         const checkedMatch = line.match(/^[\*\-]\s+\[[xX]\]\s+(.*)$/);
         if (checkedMatch) return `/[x];${checkedMatch[1]}`;
 
-        // Unordered Lists (- text or * text)
         const ulMatch = line.match(/^[\*\-]\s+(.*)$/);
         if (ulMatch) return `/-;${ulMatch[1]};/`;
 
-        // Ordered Lists (1. text)
         const olMatch = line.match(/^\d+\.\s+(.*)$/);
         if (olMatch) return `/0;${olMatch[1]};/`;
 
@@ -243,6 +237,7 @@ export const convertMarkdownToFloxt = (md: string): string => {
     return processedLines.join('\n');
 };
 
+// Iteratively strips custom Floxt markup tags to generate standard Markdown outputs.
 export const convertFloxtToMarkdown = (text: string): string => {
     let md = text;
     let previous;
@@ -277,18 +272,15 @@ export const convertFloxtToMarkdown = (text: string): string => {
                 case 'table': {
                     const lines = content.trim().split(/\r?\n/);
                     if (lines.length === 0) return '';
-
                     const headers = lines[0].split('|').map((c: string) => c.trim());
                     const headerRow = `| ${headers.join(' | ')} |`;
                     const separatorRow = `| ${headers.map(() => '---').join(' | ')} |`;
-
                     let bodyRows = '';
                     if (lines.length > 1) {
                         bodyRows = '\n' + lines.slice(1).map((line: string) => {
                             return `| ${line.split('|').map((c: string) => c.trim()).join(' | ')} |`;
                         }).join('\n');
                     }
-
                     return `\n${headerRow}\n${separatorRow}${bodyRows}\n`;
                 }
 
@@ -307,6 +299,7 @@ export const convertFloxtToMarkdown = (text: string): string => {
     return md;
 };
 
+// Generates a fully contained HTML document string suitable for file export or PDF printing.
 export const generateHTML = (text: string, fileName: string): string => {
     let html = text
             .replace(/&/g, '__FLXT_AMP__')

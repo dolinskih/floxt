@@ -7,6 +7,8 @@ import ConfirmModal from "./ConfirmModal";
 import { useSettings } from "./contexts/SettingsContext";
 import { useProjectManager } from "./hooks/useProjectManager";
 
+// Acts as the primary layout orchestrator. All business logic is abstracted into Contexts 
+// and Custom Hooks to keep the React rendering tree clean and performant.
 export default function Home() {
     const { panelPosition, viewMode, setViewMode, fontSize, showLineNumbers } = useSettings();
 
@@ -40,6 +42,7 @@ export default function Home() {
                 filePath={filePath}
                 setFilePath={setFilePath}
                 projectName={projectName}
+                // Maps the global unsaved tracker dictionary into the file objects for the UI renderer.
                 projectFiles={projectFiles.map(f => ({
                     ...f,
                     hasUnsavedChanges: unsavedFilesTracker[f.path] || false
@@ -52,7 +55,7 @@ export default function Home() {
             />
 
             <div className="flex-1 flex flex-col min-w-0">
-                {/* File Tabs */}
+                {/* Horizontal Tab Bar: Only renders if a workspace folder is mounted. */}
                 {projectName && activeFiles.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
                         {activeFiles.map((file, idx) => (

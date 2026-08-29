@@ -14,7 +14,6 @@ export interface ProjectFile {
     hasUnsavedChanges: boolean;
 }
 
-// Notice how clean the props interface is now!
 interface PanelLayoutProps {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
@@ -81,6 +80,8 @@ export default function PanelLayout({
     const [isImportOpen, setIsImportOpen] = useState<boolean>(false);
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
+    // Progressive Web App (PWA) installation handler. Captures the browser's install prompt 
+    // to trigger it programmatically via a custom UI button.
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
     useEffect(() => {
@@ -152,6 +153,7 @@ export default function PanelLayout({
         }
     }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath, onNewFileSaved]);
 
+    // Triggers an auto-save operation using a debounce delay to prevent disk thrashing while typing.
     useEffect(() => {
         if (autoSave && isFileTracked && (fileHandle || filePath) && hasUnsavedChanges) {
             const timeoutId = setTimeout(() => {
@@ -163,6 +165,7 @@ export default function PanelLayout({
 
     const handleOpenClick = useCallback(async () => {
         try {
+            // Favor the modern Web File System API for web environments before defaulting to legacy input references.
             if ('showOpenFilePicker' in window) {
                 const [handle] = await (window as any).showOpenFilePicker({
                     types: [{ description: 'Floxt File', accept: { 'text/plain': ['.floxt'] } }],
@@ -192,6 +195,7 @@ export default function PanelLayout({
         setTimeout(() => setCopiedCommand(null), 2000);
     };
 
+    // Global keyboard listener bound in the capture phase to safely override default browser shortcuts (e.g. overriding Ctrl+S to prevent the browser save dialog).
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey || e.metaKey) {

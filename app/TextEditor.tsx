@@ -18,12 +18,14 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     const preRef = useRef<HTMLDivElement>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
 
+    // Intercepts keyboard events to handle custom Floxt formatting shortcuts, auto-closing tags, 
+    // and smart cursor navigation without relying on heavy external libraries.
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const target = e.target as HTMLTextAreaElement;
         const start = target.selectionStart;
         const end = target.selectionEnd;
 
-        // Tab Indentation
+        // Tab Indentation: Prevents default focus-shifting to keep the user in the editor.
         if (e.key === 'Tab') {
             e.preventDefault();
             const newText = text.substring(0, start) + "    " + text.substring(end);
@@ -36,7 +38,8 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
-        // Auto-close tags when typing ';'
+        // Auto-close tags: Listens for the trailing semicolon of an opening tag to automatically append 
+        // the corresponding closing tag based on the detected tag type (standard vs complex).
         if (e.key === ';') {
             const textBefore = text.substring(0, start);
             const match = textBefore.match(/\/([a-zA-Z0-9-]+)$/);
@@ -56,6 +59,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     return;
                 } else if (complexTags.includes(tag)) {
                     e.preventDefault();
+                    // Complex tags require URL and description attributes, so we scaffold them automatically.
                     const newText = text.substring(0, start) + ";url;description;/" + text.substring(end);
                     setText(newText);
                     setTimeout(() => {
@@ -69,7 +73,8 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             }
         }
 
-        // Auto-list items when pressing Enter inside a list block
+        // Auto-list items: Scans the document stack to detect if the user is currently inside a list block.
+        // If they hit enter, it automatically prepends the next line with a bullet point.
         if (e.key === 'Enter') {
             const textBefore = text.substring(0, start);
             const matches = [...textBefore.matchAll(/(\/([a-z0-9-]+);|;\/)/gi)];
@@ -96,7 +101,8 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             }
         }
 
-        // Smart Navigation & Selection
+        // Smart Navigation: Overrides standard arrow key behavior to jump entire closing tags
+        // or attribute blocks as single logical units rather than forcing character-by-character navigation.
         if (e.key === 'ArrowRight') {
             if (start === end) {
                 if (text.substring(start, start + 2) === ';/') {
@@ -136,7 +142,8 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             }
         }
 
-        // Smart Backspace (delete auto-closed tags)
+        // Smart Backspace: If a user deletes an opening tag, this recursively cleans up the associated 
+        // scaffolded closing tags and attributes to prevent orphaned syntax errors.
         if (e.key === 'Backspace' && start === end) {
             const textBefore = text.substring(0, start);
             const textAfter = text.substring(end);
@@ -169,6 +176,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         }
     };
 
+    // Synchronizes scrolling across the invisible textarea, the highlighted pre block, and the line numbers.
     const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
         if (preRef.current) {
             preRef.current.scrollTop = e.currentTarget.scrollTop;
@@ -179,9 +187,12 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         }
     };
 
+    // Event delegation handler for the Read View. 
+    // Uses a single listener on the parent container instead of attaching listeners to every parsed DOM element.
     const handleReadViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.target as HTMLElement;
 
+        // Handles clicks on copy-to-clipboard buttons within code blocks.
         const copyBtn = target.closest('.floxt-copy-btn') as HTMLButtonElement;
         if (copyBtn) {
             e.preventDefault();
@@ -203,6 +214,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
+        // Routs hyperlink clicks through Tauri's native OS browser to prevent the app wrapper from navigating away.
         const anchor = target.closest('a');
         if (anchor && anchor.href) {
             e.preventDefault();
@@ -215,6 +227,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
+        // Toggles Floxt checkbox syntax directly from the parsed Read View.
         if (target.tagName === 'INPUT' && target.classList.contains('floxt-checkbox')) {
             const targetIndex = parseInt(target.getAttribute('data-cb-index') || "-1", 10);
             if (targetIndex > -1) {
@@ -232,6 +245,8 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
+        // Ctrl+Click handler: Calculates the string index of the clicked word in the Read View 
+        // and jumps the Code View cursor to that exact location for seamless editing.
         if ((e.ctrlKey || e.metaKey) && (viewMode === 'read' || viewMode === 'split')) {
             e.preventDefault();
             if (target === e.currentTarget) return;
@@ -292,6 +307,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                         )}
 
                         <div className="relative flex-1 overflow-hidden bg-transparent">
+                            {/* Layer 1: The styling overlay holding the dynamically parsed syntax highlighting. */}
                             <div
                                 ref={preRef}
                                 style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
@@ -302,6 +318,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                                 {safeText.endsWith('\n') ? <br /> : null}
                             </div>
 
+                            {/* Layer 2: The transparent interaction layer receiving keyboard inputs. */}
                             <textarea
                                 ref={textareaRef}
                                 value={text}

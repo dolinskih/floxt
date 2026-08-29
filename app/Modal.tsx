@@ -1,8 +1,9 @@
-"use client";
+"use client"; // Flags that this wrapper uses browser event listeners.
 
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
 
+// The foundational props allowing generic content inside the modal container.
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -10,7 +11,9 @@ interface ModalProps {
     children: React.ReactNode;
 }
 
+// A reusable centered dialog wrapper featuring a blurred background and escape-key handling.
 export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+    // Hooks into the document to close the modal if the Escape key is struck.
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
@@ -21,7 +24,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isOpen, onClose]);
 
-    if (!isOpen) return null;
+    if (!isOpen) return null; // Avoids rendering the modal hierarchy when closed.
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -35,6 +38,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
                         <X size={24} />
                     </button>
                 </div>
+                {/* Dynamically loads whatever specific child components are passed into the modal. */}
                 <div className="p-4 text-gray-300 font-mono text-sm">
                     {children}
                 </div>

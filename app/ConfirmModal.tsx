@@ -1,7 +1,8 @@
-"use client";
+"use client"; // Enables client-side interactivity in this component.
 
 import { X } from 'lucide-react';
 
+// Defines required props to control the modal's state and callback functions.
 interface ConfirmModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -10,13 +11,15 @@ interface ConfirmModalProps {
     message: string;
 }
 
+// Presents a centered dialog requiring explicit confirmation before a destructive action.
 export default function ConfirmModal({ isOpen, onClose, onConfirm, title, message }: ConfirmModalProps) {
-    if (!isOpen) return null;
+    if (!isOpen) return null; // Prevents the modal from rendering if not active.
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
             <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-xl w-[90%] max-w-sm overflow-hidden flex flex-col">
                 
+                {/* Header section featuring the title and a close button. */}
                 <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
                     <h2 className="font-bold text-neutral-800 dark:text-white">{title}</h2>
                     <button onClick={onClose} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md text-neutral-500 transition-colors">
@@ -24,10 +27,12 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
                     </button>
                 </div>
                 
+                {/* Body section showing the contextual warning message. */}
                 <div className="p-4 text-sm text-neutral-600 dark:text-neutral-400">
                     {message}
                 </div>
                 
+                {/* Footer section providing the cancellation and confirmation triggers. */}
                 <div className="flex justify-end gap-2 p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950/50">
                     <button 
                         onClick={onClose} 

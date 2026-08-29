@@ -1,7 +1,8 @@
-"use client";
+"use client"; // Marks this module as a Client Component in Next.js.
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+// Defines the shape of the settings state accessible throughout the application.
 interface SettingsContextType {
     viewMode: 'code' | 'read' | 'split';
     setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read' | 'split'>>;
@@ -19,9 +20,12 @@ interface SettingsContextType {
     setPanelPosition: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
 }
 
+// Initializes the context to hold settings data.
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+// Provider component that wraps the application to supply settings state.
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
+    // State definitions for editor and UI preferences.
     const [viewMode, setViewMode] = useState<'code' | 'read' | 'split'>('code');
     const [fontSize, setFontSize] = useState<number>(14);
     const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
@@ -31,7 +35,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const [panelPosition, setPanelPosition] = useState<'left' | 'right'>('left');
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-    // Load from LocalStorage on mount
+    // Load saved settings from LocalStorage when the component mounts.
     useEffect(() => {
         const savedFontSize = localStorage.getItem('floxt_fontSize');
         if (savedFontSize) setFontSize(parseInt(savedFontSize, 10));
@@ -51,10 +55,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const savedPanelPosition = localStorage.getItem('floxt_panelPosition') as 'left' | 'right';
         if (savedPanelPosition) setPanelPosition(savedPanelPosition);
 
-        setIsLoaded(true);
+        setIsLoaded(true); // Flags that initial loading is complete to safely allow updates.
     }, []);
 
-    // Save to LocalStorage on change
+    // Save updated settings to LocalStorage whenever they change.
     useEffect(() => {
         if (!isLoaded) return;
         localStorage.setItem('floxt_fontSize', fontSize.toString());
@@ -65,7 +69,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('floxt_panelPosition', panelPosition);
     }, [fontSize, showLineNumbers, autoSave, showShortcuts, theme, panelPosition, isLoaded]);
 
-    // Handle Theme changes
+    // Apply the selected theme to the root HTML document.
     useEffect(() => {
         const root = window.document.documentElement;
         const applyTheme = () => {
@@ -103,7 +107,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-// Custom hook to use settings
+// Custom hook providing an easy way for components to access settings.
 export function useSettings() {
     const context = useContext(SettingsContext);
     if (!context) throw new Error("useSettings must be used within a SettingsProvider");

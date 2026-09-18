@@ -1,9 +1,9 @@
-"use client"; // Flags that this wrapper uses browser event listeners.
+"use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { X } from "lucide-react";
+import AnimatedDialog from "./AnimatedDialog";
 
-// The foundational props allowing generic content inside the modal container.
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -11,38 +11,23 @@ interface ModalProps {
     children: React.ReactNode;
 }
 
-// A reusable centered dialog wrapper featuring a blurred background and escape-key handling.
 export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
-    // Hooks into the document to close the modal if the Escape key is struck.
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-        };
-        if (isOpen) {
-            window.addEventListener("keydown", handleKeyDown);
-        }
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
-
-    if (!isOpen) return null; // Avoids rendering the modal hierarchy when closed.
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between p-4 border-b border-neutral-300 dark:border-neutral-700">
-                    <h2 className="text-neutral-900 dark:text-white font-mono font-bold text-lg">{title}</h2>
+        <AnimatedDialog isOpen={isOpen} onClose={onClose} className="max-w-xl">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-colors duration-200">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+                    <h2 className="text-lg font-bold font-sans text-neutral-900 dark:text-white">
+                        {title}
+                    </h2>
                     <button
                         onClick={onClose}
-                        className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
+                        className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >
-                        <X size={24} />
+                        <X size={18} />
                     </button>
                 </div>
-                {/* Dynamically loads whatever specific child components are passed into the modal. */}
-                <div className="p-4 text-gray-300 font-mono text-sm">
-                    {children}
-                </div>
+                <div className="p-6">{children}</div>
             </div>
-        </div>
+        </AnimatedDialog>
     );
 }

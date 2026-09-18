@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import AnimatedDialog from "./AnimatedDialog";
 
 interface ExitWarningModalProps {
     isOpen: boolean;
@@ -15,13 +16,10 @@ export default function ExitWarningModal({
     onConfirmExit,
     hasProjectUnsaved = false,
 }: ExitWarningModalProps) {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-            <div className="w-full max-w-md bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-150">
-
-                {/* Header with Warning Icon */}
+        <AnimatedDialog isOpen={isOpen} onClose={onClose} className="max-w-md">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center">
+                {/* Header */}
                 <div className="flex items-center gap-2 mb-4 text-neutral-900 dark:text-white">
                     <AlertTriangle size={24} className="text-amber-500 flex-shrink-0" />
                     <h2 className="text-xl font-bold font-sans">Warning</h2>
@@ -34,7 +32,7 @@ export default function ExitWarningModal({
                         : "You have unsaved changes in the currently opened document."}
                 </p>
 
-                {/* Action Buttons matching wireframe */}
+                {/* Buttons */}
                 <div className="flex items-center justify-center gap-4 w-full">
                     <button
                         onClick={onClose}
@@ -42,7 +40,6 @@ export default function ExitWarningModal({
                     >
                         Cancel
                     </button>
-
                     <button
                         onClick={onConfirmExit}
                         className="flex-1 py-2 px-4 rounded-xl border border-red-500/80 bg-red-50 dark:bg-red-950/30 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors cursor-pointer"
@@ -51,6 +48,6 @@ export default function ExitWarningModal({
                     </button>
                 </div>
             </div>
-        </div>
+        </AnimatedDialog>
     );
 }

@@ -28,7 +28,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const [fontSize, setFontSize] = useState<number>(14);
     const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(false);
-    const [showShortcuts, setShowShortcuts] = useState<boolean>(true);
+    const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
     const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
     const [panelPosition, setPanelPosition] = useState<'left' | 'right'>('left');
     const [lineWrap, setLineWrap] = useState<boolean>(true);

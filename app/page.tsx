@@ -1,14 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import PanelLayout from "./PanelLayout";
 import TextEditor from "./TextEditor";
 import NoteTitle from "./NoteTitle";
 import ConfirmModal from "./ConfirmModal";
+import WelcomeGuideModal from "./WelcomeGuideModal";
 import { useSettings } from "./contexts/SettingsContext";
 import { useProjectManager } from "./hooks/useProjectManager";
 
 export default function Home() {
     const { panelPosition, viewMode, setViewMode, fontSize, showLineNumbers, lineWrap } = useSettings();
+    const [isWelcomeGuideOpen, setIsWelcomeGuideOpen] = useState(false);
 
     const {
         text, setText, title, setTitle,
@@ -24,6 +27,18 @@ export default function Home() {
         handleSaveFileFromProject, handleNewFileSaved,
         handleDeleteFileFromProject, executeDelete
     } = useProjectManager();
+
+    useEffect(() => {
+        const hasSeenGuide = localStorage.getItem("floxt_has_seen_guide");
+        if (!hasSeenGuide) {
+            setIsWelcomeGuideOpen(true);
+        }
+    }, []);
+
+    const handleCloseGuide = () => {
+        setIsWelcomeGuideOpen(false);
+        localStorage.setItem("floxt_has_seen_guide", "true");
+    };
 
     return (
         <main className={`flex w-full h-[calc(100vh-30px)] mt-[30px] p-4 gap-6 overflow-y-auto bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200 ${panelPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -49,6 +64,7 @@ export default function Home() {
                 onSaveFileFromProject={handleSaveFileFromProject}
                 onNewFileSaved={handleNewFileSaved}
                 onDeleteFileFromProject={handleDeleteFileFromProject}
+                onOpenGuide={() => setIsWelcomeGuideOpen(true)}
             />
 
             <div className="flex-1 flex flex-col min-w-0">
@@ -93,6 +109,11 @@ export default function Home() {
                 onConfirm={executeDelete}
                 title="Delete Note"
                 message={`Are you sure you want to permanently delete "${fileToDelete?.split(/[\\/]/).pop()}"? This action cannot be undone.`}
+            />
+
+            <WelcomeGuideModal
+                isOpen={isWelcomeGuideOpen}
+                onClose={handleCloseGuide}
             />
         </main>
     );

@@ -33,6 +33,7 @@ interface PanelLayoutProps {
     onSaveFileFromProject?: (path: string) => void;
     onNewFileSaved?: (path: string, name: string) => void;
     onDeleteFileFromProject?: (path: string) => void;
+    onOpenGuide?: () => void;
 }
 
 const commandsData = [
@@ -58,7 +59,7 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, filePath, setFilePath, projectName, projectFiles, onOpenProject, onOpenFileFromProject, onSaveFileFromProject, onNewFileSaved, onDeleteFileFromProject
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, filePath, setFilePath, projectName, projectFiles, onOpenProject, onOpenFileFromProject, onSaveFileFromProject, onNewFileSaved, onDeleteFileFromProject, onOpenGuide
 }: PanelLayoutProps) {
     const {
         viewMode, setViewMode,
@@ -286,25 +287,25 @@ export default function PanelLayout({
     return (
         <div className="sticky top-4 self-start flex flex-col gap-2 w-fit h-fit items-center z-50">
             {projectName && isOpen && (
-                <section className="p-3 bg-neutral-900 border border-neutral-700 rounded-lg w-full flex flex-col gap-2 shadow-sm">
-                    <h3 className="font-bold text-white border-b border-neutral-800 pb-2 mb-1 truncate" title={projectName}>
+                <section className="p-3 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg w-full flex flex-col gap-2 shadow-sm">
+                    <h3 className="font-bold text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-800 pb-2 mb-1 truncate" title={projectName}>
                         {projectName}
                     </h3>
                     <div className="flex flex-col gap-1 max-h-[30vh] overflow-y-auto pr-1">
                         {projectFiles?.map((file, idx) => (
-                            <div key={idx} className="flex items-center justify-between group text-sm p-1.5 hover:bg-neutral-800/50 rounded transition-colors">
+                            <div key={idx} className="flex items-center justify-between group text-sm p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 rounded transition-colors">
                                 <div className="flex items-center gap-2 overflow-hidden pr-2">
                                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${file.hasUnsavedChanges ? 'bg-yellow-500' : 'bg-transparent'}`} />
-                                    <span className="truncate text-neutral-300 font-medium">{file.name}</span>
+                                    <span className="truncate text-neutral-700 dark:text-neutral-300 font-medium">{file.name}</span>
                                 </div>
                                 <div className="flex gap-1.5">
-                                    <button onClick={() => onOpenFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-600 bg-neutral-800 hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-300 transition-colors shadow-sm">
+                                    <button onClick={() => onOpenFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm">
                                         Open <SquareArrowOutUpRight size={10} strokeWidth={3} />
                                     </button>
-                                    <button onClick={() => onSaveFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-600 bg-neutral-800 hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-300 transition-colors shadow-sm">
+                                    <button onClick={() => onSaveFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm">
                                         Save <Save size={10} strokeWidth={3} />
                                     </button>
-                                    <button onClick={() => onDeleteFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-red-900/50 bg-neutral-800 hover:bg-red-950/50 rounded text-[10px] font-bold text-red-400 transition-colors shadow-sm">
+                                    <button onClick={() => onDeleteFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-950/50 rounded text-[10px] font-bold text-red-600 dark:text-red-400 transition-colors shadow-sm">
                                         <Trash size={10} strokeWidth={3} />
                                     </button>
                                 </div>
@@ -314,7 +315,8 @@ export default function PanelLayout({
                 </section>
             )}
 
-            <section className={`p-3 h-fit bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-700 rounded-lg shadow-sm`}>
+            {/* Side Panel Actions */}
+            <section className={`p-3 h-fit bg-white dark:bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm`}>
 
                 <input type="file" accept=".floxt" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />
 
@@ -322,75 +324,75 @@ export default function PanelLayout({
                     <div className={`overflow-hidden transition-all duration-150 ease-in-out flex flex-col ${isOpen ? 'max-h-[600px] max-w-[300px] opacity-100' : 'max-h-0 max-w-0 opacity-0'}`}>
 
                         <button onClick={handleNew} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Plus size={28} className="mt-2 mb-2 text-white group-hover:text-neutral-300 transition-colors" />
+                            <Plus size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-white font-medium">New note</p>
-                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+N</span>}
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">New note</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+N</span>}
                             </div>
                         </button>
 
                         <button onClick={handleSave} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Save size={28} className="mt-2 mb-2 text-white group-hover:text-neutral-300 transition-colors" />
+                            <Save size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-white font-medium">Save note</p>
-                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Ctrl+S</span>}
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Save note</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Ctrl+S</span>}
                             </div>
                         </button>
 
                         <button onClick={handleOpenClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <SquareArrowOutUpRight size={28} className="mt-2 mb-2 p-0.5 text-white group-hover:text-neutral-300 transition-colors" />
+                            <SquareArrowOutUpRight size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-white font-medium">Open note</p>
-                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Ctrl+O</span>}
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Open note</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Ctrl+O</span>}
                             </div>
                         </button>
 
                         <button onClick={onOpenProject} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Library size={28} className="mt-2 mb-2 p-0.5 text-white group-hover:text-neutral-300 transition-colors" />
+                            <Library size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-white font-medium">Open project</p>
-                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+P</span>}
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Open project</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+P</span>}
                             </div>
                         </button>
 
                         <button onClick={() => setIsImportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Upload size={28} className="mt-2 mb-2 p-0.5 text-white group-hover:text-neutral-300 transition-colors" />
+                            <Upload size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-white font-medium">Import</p>
-                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+I</span>}
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Import</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+I</span>}
                             </div>
                         </button>
 
                         <button onClick={() => setIsExportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Download size={28} className="mt-2 mb-2 p-0.5 text-white group-hover:text-neutral-300 transition-colors" />
+                            <Download size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-white font-medium">Export</p>
-                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+E</span>}
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Export</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+E</span>}
                             </div>
                         </button>
 
                         <button onClick={() => setIsCommandsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Terminal size={28} className="mt-2 mb-2 p-0.5 text-white group-hover:text-neutral-300 transition-colors" />
+                            <Terminal size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-white font-medium">Commands</p>
-                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+C</span>}
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Commands</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+C</span>}
                             </div>
                         </button>
 
                         <button onClick={() => setIsSettingsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Cog size={28} className="mt-2 mb-2 p-0.5 text-white group-hover:text-neutral-300 transition-colors" />
+                            <Cog size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-white font-medium">Settings</p>
-                                {showShortcuts && <span className="text-[10px] text-neutral-400 font-mono">Alt+S</span>}
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Settings</p>
+                                {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+S</span>}
                             </div>
                         </button>
 
                         {deferredPrompt && (
-                            <button onClick={handleInstallClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer mt-2 pt-2 border-t border-neutral-800 group"}>
-                                <DownloadCloud size={28} className="mt-2 mb-2 text-white group-hover:text-neutral-300 transition-colors" />
+                            <button onClick={handleInstallClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-800 group"}>
+                                <DownloadCloud size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                                 <div className="flex flex-col items-start m-2 mr-5">
-                                    <p className="whitespace-nowrap text-white font-medium">Install</p>
-                                    <span className="text-[10px] text-neutral-400 font-mono whitespace-nowrap">Work offline with faster speed</span>
+                                    <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Install</p>
+                                    <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono whitespace-nowrap">Work offline with faster speed</span>
                                 </div>
                             </button>
                         )}
@@ -400,21 +402,22 @@ export default function PanelLayout({
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className={`flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-all duration-150 ease-in-out cursor-pointer ${isOpen ? 'mt-5' : 'w-full justify-center'}`}>
-                    {isOpen ? <ChevronUp size={28} className="mt-2 mb-2 text-white" /> : <ChevronDown size={28} className="mt-2 mb-2 text-white" />}
+                    {isOpen ? <ChevronUp size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white" /> : <ChevronDown size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white" />}
                 </button>
             </section>
 
-            <div className={`flex gap-2 p-1.5 transition-all duration-150 bg-neutral-900 border border-neutral-700 rounded-xl ${isOpen ? 'w-full flex-row' : 'w-fit flex-col'}`}>
+            {/* View Switcher Controls */}
+            <div className={`flex gap-2 p-1.5 transition-all duration-150 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-sm ${isOpen ? 'w-full flex-row' : 'w-fit flex-col'}`}>
                 <button
                     onClick={() => setViewMode('code')}
                     title="Alt+1"
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'code' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'code' ? 'border border-neutral-300 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400 border border-transparent'}`}
                 >
                     <Terminal size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Code view</span>
-                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+1</span>}
+                            {showShortcuts && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono">Alt+1</span>}
                         </div>
                     )}
                 </button>
@@ -422,13 +425,13 @@ export default function PanelLayout({
                 <button
                     onClick={() => setViewMode('split')}
                     title="Alt+2"
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'split' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'split' ? 'border border-neutral-300 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400 border border-transparent'}`}
                 >
                     <Columns size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Split view</span>
-                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>}
+                            {showShortcuts && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono">Alt+2</span>}
                         </div>
                     )}
                 </button>
@@ -436,13 +439,13 @@ export default function PanelLayout({
                 <button
                     onClick={() => setViewMode('read')}
                     title="Alt+3"
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-500 bg-neutral-800 text-white' : 'hover:bg-neutral-800/50 text-neutral-400 border border-transparent'}`}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-300 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400 border border-transparent'}`}
                 >
                     <BookOpen size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Read view</span>
-                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+3</span>}
+                            {showShortcuts && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono">Alt+3</span>}
                         </div>
                     )}
                 </button>
@@ -452,18 +455,16 @@ export default function PanelLayout({
                 <div className="w-full flex justify-center items-center py-1 select-none">
                     {isOpen ? (
                         <span
-                            className={`text-xs font-mono transition-colors duration-150 text-center truncate ${
-                                hasUnsavedChanges ? 'text-yellow-500' : 'text-neutral-500'
-                            }`}
+                            className={`text-xs font-mono transition-colors duration-150 text-center truncate ${hasUnsavedChanges ? 'text-yellow-500' : 'text-neutral-500'
+                                }`}
                         >
                             {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
                         </span>
                     ) : (
                         <span
                             title={hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
-                            className={`w-2 h-2 rounded-full transition-colors duration-150 ${
-                                hasUnsavedChanges ? 'bg-yellow-500' : 'bg-neutral-500'
-                            }`}
+                            className={`w-2 h-2 rounded-full transition-colors duration-150 ${hasUnsavedChanges ? 'bg-yellow-500' : 'bg-neutral-500'
+                                }`}
                         />
                     )}
                 </div>
@@ -475,20 +476,20 @@ export default function PanelLayout({
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
                 <div className="max-h-[60vh] overflow-y-auto pr-2">
                     <div className="flex flex-col gap-1 w-full">
-                        <div className="grid grid-cols-[40px_1fr_100px_60px] gap-4 pb-2 border-b border-neutral-700 text-neutral-500 font-bold mb-2 sticky top-0 bg-neutral-900 pt-1">
+                        <div className="grid grid-cols-[40px_1fr_100px_60px] gap-4 pb-2 border-b border-neutral-200 dark:border-neutral-700 text-neutral-500 font-bold mb-2 sticky top-0 bg-white dark:bg-neutral-900 pt-1">
                             <span className="text-center"></span>
                             <span>Name</span>
                             <span className="text-center">Open</span>
                             <span className="text-center">Close</span>
                         </div>
                         {commandsData.map((cmd, idx) => (
-                            <div key={idx} className="grid grid-cols-[40px_1fr_100px_60px] gap-4 items-center py-2 border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 px-1 rounded transition-colors group">
-                                <span className="text-gray-200 font-bold flex justify-center text-base">
+                            <div key={idx} className="grid grid-cols-[40px_1fr_100px_60px] gap-4 items-center py-2 border-b border-neutral-200/50 dark:border-neutral-800/50 last:border-0 hover:bg-neutral-100 dark:hover:bg-neutral-800/30 px-1 rounded transition-colors group">
+                                <span className="text-neutral-800 dark:text-gray-200 font-bold flex justify-center text-base">
                                     {cmd.icon === 'S' ? <s className="decoration-2">{cmd.icon}</s> : cmd.icon === 'U' ? <u className="underline-offset-2 decoration-2">{cmd.icon}</u> : cmd.icon === 'I' ? <i className="font-serif">{cmd.icon}</i> : cmd.icon}
                                 </span>
-                                <span className="text-gray-300 truncate">{cmd.name}</span>
-                                <code onClick={() => handleCopy(cmd.open, `${idx}-open`)} className={`px-1 py-0.5 rounded text-center border text-xs cursor-pointer transition-colors ${copiedCommand === `${idx}-open` ? 'text-emerald-400 bg-emerald-950/50 border-emerald-500' : 'text-yellow-500 bg-neutral-950 border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-900'}`}>{cmd.open}</code>
-                                <code onClick={() => handleCopy(cmd.close, `${idx}-close`)} className={`px-1 py-0.5 rounded text-center border text-xs ${cmd.close === 'None' ? 'text-neutral-500 bg-transparent border-transparent' : `cursor-pointer transition-colors ${copiedCommand === `${idx}-close` ? 'text-emerald-400 bg-emerald-950/50 border-emerald-500' : 'text-yellow-500 bg-neutral-950 border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-900'}`}`}>{cmd.close}</code>
+                                <span className="text-neutral-700 dark:text-gray-300 truncate">{cmd.name}</span>
+                                <code onClick={() => handleCopy(cmd.open, `${idx}-open`)} className={`px-1 py-0.5 rounded text-center border text-xs cursor-pointer transition-colors ${copiedCommand === `${idx}-open` ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-500' : 'text-yellow-600 dark:text-yellow-500 bg-neutral-100 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-200 dark:hover:bg-neutral-900'}`}>{cmd.open}</code>
+                                <code onClick={() => handleCopy(cmd.close, `${idx}-close`)} className={`px-1 py-0.5 rounded text-center border text-xs ${cmd.close === 'None' ? 'text-neutral-400 dark:text-neutral-500 bg-transparent border-transparent' : `cursor-pointer transition-colors ${copiedCommand === `${idx}-close` ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-500' : 'text-yellow-600 dark:text-yellow-500 bg-neutral-100 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-200 dark:hover:bg-neutral-900'}`}`}>{cmd.close}</code>
                             </div>
                         ))}
                     </div>
@@ -498,72 +499,87 @@ export default function PanelLayout({
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Settings">
                 <div className="flex flex-col gap-6 p-2">
                     <div className="flex items-center justify-between">
-                        <span className="text-gray-200">Editor Font Size</span>
-                        <div className="flex items-center gap-4 bg-neutral-950 px-3 py-1.5 rounded border border-neutral-800">
-                            <button onClick={() => setFontSize(f => Math.max(10, f - 1))} className="text-neutral-400 hover:text-white cursor-pointer active:scale-95">-</button>
-                            <span className="text-yellow-500 font-mono w-6 text-center">{fontSize}</span>
-                            <button onClick={() => setFontSize(f => Math.min(24, f + 1))} className="text-neutral-400 hover:text-white cursor-pointer active:scale-95">+</button>
+                        <span className="text-neutral-800 dark:text-gray-200">Editor Font Size</span>
+                        <div className="flex items-center gap-4 bg-neutral-100 dark:bg-neutral-950 px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-800">
+                            <button onClick={() => setFontSize(f => Math.max(10, f - 1))} className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer active:scale-95">-</button>
+                            <span className="text-yellow-600 dark:text-yellow-500 font-mono w-6 text-center">{fontSize}</span>
+                            <button onClick={() => setFontSize(f => Math.min(24, f + 1))} className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer active:scale-95">+</button>
                         </div>
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-gray-200">Show Line Numbers</span>
-                        <button onClick={() => setShowLineNumbers(!showLineNumbers)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showLineNumbers ? 'bg-emerald-500' : 'bg-neutral-700'}`}>
+                        <span className="text-neutral-800 dark:text-gray-200">Show Line Numbers</span>
+                        <button onClick={() => setShowLineNumbers(!showLineNumbers)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showLineNumbers ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showLineNumbers ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-gray-200">Wrap Lines</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Wrap Lines</span>
                             <span className="text-[10px] text-neutral-500">Wrap text to avoid horizontal scrolling</span>
                         </div>
-                        <button onClick={() => setLineWrap(!lineWrap)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${lineWrap ? 'bg-emerald-500' : 'bg-neutral-700'}`}>
+                        <button onClick={() => setLineWrap(!lineWrap)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${lineWrap ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${lineWrap ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-gray-200">Auto Save</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Auto Save</span>
                             <span className="text-[10px] text-neutral-500">Only works for opened files</span>
                         </div>
-                        <button onClick={() => setAutoSave(!autoSave)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${autoSave ? 'bg-emerald-500' : 'bg-neutral-700'}`}>
+                        <button onClick={() => setAutoSave(!autoSave)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${autoSave ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${autoSave ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-gray-200">Show Keyboard Shortcuts</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Show Keyboard Shortcuts</span>
                         </div>
-                        <button onClick={() => setShowShortcuts(!showShortcuts)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showShortcuts ? 'bg-emerald-500' : 'bg-neutral-700'}`}>
+                        <button onClick={() => setShowShortcuts(!showShortcuts)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showShortcuts ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showShortcuts ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-gray-200">Pin Panel to Right</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Pin Panel to Right</span>
                         </div>
                         <button
                             onClick={() => setPanelPosition(prev => prev === 'left' ? 'right' : 'left')}
-                            className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${panelPosition === 'right' ? 'bg-emerald-500' : 'bg-neutral-700'}`}
+                            className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${panelPosition === 'right' ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}
                         >
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${panelPosition === 'right' ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-gray-200">Theme</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Theme</span>
                         </div>
                         <select
                             value={theme}
                             onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
-                            className="bg-neutral-950 border border-neutral-800 text-sm rounded px-2 py-1 outline-none text-gray-200 cursor-pointer"
+                            className="bg-neutral-100 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 text-sm rounded px-2 py-1 outline-none text-neutral-800 dark:text-gray-200 cursor-pointer"
                         >
                             <option value="system">System Default</option>
                             <option value="dark">Dark Mode</option>
                             <option value="light">Light Mode</option>
                         </select>
                     </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-neutral-200 dark:border-neutral-800">
+                        <div className="flex flex-col">
+                            <span className="text-neutral-800 dark:text-gray-200 text-sm">Welcome Guide</span>
+                            <span className="text-[10px] text-neutral-500">Replay the introductory walkthrough</span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setIsSettingsOpen(false);
+                                onOpenGuide?.();
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded border border-neutral-300 dark:border-neutral-700 transition-colors"
+                        >
+                            Open Guide
+                        </button>
+                    </div>
                 </div>
             </Modal>
         </div>
-    )
+    );
 }

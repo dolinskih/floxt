@@ -208,7 +208,11 @@ export default function PanelLayout({
             }
 
             if (e.altKey) {
-                if (e.key.toLowerCase() === 'n') {
+                if (e.key.toLowerCase() === 't') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsOpen(prev => !prev);
+                } else if (e.key.toLowerCase() === 'n') {
                     e.preventDefault();
                     e.stopPropagation();
                     handleNew();
@@ -401,8 +405,22 @@ export default function PanelLayout({
 
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-all duration-150 ease-in-out cursor-pointer ${isOpen ? 'mt-5' : 'w-full justify-center'}`}>
-                    {isOpen ? <ChevronUp size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white" /> : <ChevronDown size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white" />}
+                    title={showShortcuts ? "Toggle panel (Alt+T)" : "Toggle panel"}
+                    className={`flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-all duration-150 ease-in-out cursor-pointer ${isOpen ? 'mt-5 gap-2' : 'w-full justify-center'
+                        }`}
+                >
+                    {isOpen ? (
+                        <div className="flex items-center gap-2">
+                            <ChevronUp size={28} className="text-neutral-800 dark:text-white" />
+                            {showShortcuts && (
+                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono select-none">
+                                    Alt+T
+                                </span>
+                            )}
+                        </div>
+                    ) : (
+                        <ChevronDown size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white" />
+                    )}
                 </button>
             </section>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import PanelLayout from "./PanelLayout";
 import TextEditor from "./TextEditor";
 import NoteTitle from "./NoteTitle";
@@ -8,10 +8,12 @@ import ConfirmModal from "./ConfirmModal";
 import WelcomeGuideModal from "./WelcomeGuideModal";
 import { useSettings } from "./contexts/SettingsContext";
 import { useProjectManager } from "./hooks/useProjectManager";
+import ExitWarningModal from "./ExitWarningModal";
 
 export default function Home() {
     const { panelPosition, viewMode, setViewMode, fontSize, showLineNumbers, lineWrap } = useSettings();
     const [isWelcomeGuideOpen, setIsWelcomeGuideOpen] = useState(false);
+    const [isExitWarningOpen, setIsExitWarningOpen] = useState(false);
 
     const {
         text, setText, title, setTitle,
@@ -27,6 +29,55 @@ export default function Home() {
         handleSaveFileFromProject, handleNewFileSaved,
         handleDeleteFileFromProject, executeDelete
     } = useProjectManager();
+
+    // Check if current note OR any note in the project has unsaved edits
+    const hasAnyUnsavedChanges = hasUnsavedChanges || Object.values(unsavedFilesTracker).some(Boolean);
+    const hasUnsavedRef = useRef(hasAnyUnsavedChanges);
+
+    useEffect(() => {
+        hasUnsavedRef.current = hasAnyUnsavedChanges;
+    }, [hasAnyUnsavedChanges]);
+
+    // Intercept window close requested event
+    useEffect(() => {
+        let unlisten: (() => void) | undefined;
+
+        const setupCloseListener = async () => {
+            if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
+                return;
+            }
+
+            try {
+                const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+                const appWindow = getCurrentWebviewWindow();
+
+                unlisten = await appWindow.onCloseRequested(async (event) => {
+                    if (hasUnsavedRef.current) {
+                        event.preventDefault();
+                        setIsExitWarningOpen(true);
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to register close listener:", err);
+            }
+        };
+
+        setupCloseListener();
+
+        return () => {
+            if (unlisten) unlisten();
+        };
+    }, []);
+
+    const handleForceExit = async () => {
+        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+            const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+            const appWindow = getCurrentWebviewWindow();
+            await appWindow.destroy();
+        } else {
+            window.close();
+        }
+    };
 
     useEffect(() => {
         const hasSeenGuide = localStorage.getItem("floxt_has_seen_guide");
@@ -114,6 +165,13 @@ export default function Home() {
             <WelcomeGuideModal
                 isOpen={isWelcomeGuideOpen}
                 onClose={handleCloseGuide}
+            />
+
+            <ExitWarningModal
+                isOpen={isExitWarningOpen}
+                onClose={() => setIsExitWarningOpen(false)}
+                onConfirmExit={handleForceExit}
+                hasProjectUnsaved={Object.values(unsavedFilesTracker).some(Boolean)}
             />
         </main>
     );

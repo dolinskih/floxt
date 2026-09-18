@@ -144,6 +144,30 @@ fn update_window_theme(app: tauri::AppHandle, is_dark: bool) -> Result<(), Strin
     Ok(())
 }
 
+#[tauri::command]
+fn get_package_family_name() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        use windows::ApplicationModel::Package;
+        match Package::Current() {
+            Ok(package) => {
+                match package.Id() {
+                    Ok(id) => match id.FamilyName() {
+                        Ok(name) => name.to_string(),
+                        Err(_) => "Error retrieving Family Name".to_string(),
+                    },
+                    Err(_) => "Error retrieving Package ID".to_string(),
+                }
+            }
+            Err(_) => "No package identity".to_string(),
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        "Not running on Windows".to_string()
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -155,7 +179,8 @@ pub fn run() {
             read_project_dir,
             read_document,
             delete_document,
-            update_window_theme
+            update_window_theme,
+            get_package_family_name
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

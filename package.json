@@ -6,7 +6,10 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "tauri": "tauri",
+    "tauri:dev:withidentity": "...",
+    "pack:msix": "npm run tauri -- build && (if not exist dist mkdir dist) && (if not exist dist\\icons mkdir dist\\icons) && copy /Y src-tauri\\target\\release\\Floxt.exe dist\\ && copy /Y src-tauri\\icons\\* dist\\icons\\ && winapp pack .\\dist --output .\\Floxt.msix --cert .\\devcert.pfx"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

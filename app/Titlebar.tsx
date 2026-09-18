@@ -19,7 +19,7 @@ export default function Titlebar() {
     if (!isTauri) return null;
 
     return (
-        <div className="fixed top-0 left-0 right-0 h-[30px] bg-neutral-100 dark:bg-neutral-900 flex select-none z-[9999] border-b border-neutral-300 dark:border-neutral-800">
+        <div className="fixed top-0 left-0 right-0 h-[30px] bg-transparent flex select-none z-[9999] border-b border-neutral-200/40 dark:border-neutral-800/50">
             
             {/* Left side: Logo and App Name */}
             <div className="flex items-center pl-3 gap-2 pointer-events-none text-neutral-700 dark:text-neutral-300">

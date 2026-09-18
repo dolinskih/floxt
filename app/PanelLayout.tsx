@@ -291,7 +291,7 @@ export default function PanelLayout({
     return (
         <div className="sticky top-4 self-start flex flex-col gap-2 w-fit h-fit items-center z-50">
             {projectName && isOpen && (
-                <section className="p-3 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg w-full flex flex-col gap-2 shadow-sm">
+                <section className="p-3 bg-white/60 dark:bg-neutral-900/60 border border-neutral-300 dark:border-neutral-700 rounded-lg w-full flex flex-col gap-2 shadow-sm backdrop-blur-md">
                     <h3 className="font-bold text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-800 pb-2 mb-1 truncate" title={projectName}>
                         {projectName}
                     </h3>
@@ -320,7 +320,7 @@ export default function PanelLayout({
             )}
 
             {/* Side Panel Actions */}
-            <section className={`p-3 h-fit bg-white dark:bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm`}>
+            <section className={`p-3 h-fit bg-white/60 dark:bg-neutral-900/60 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm backdrop-blur-md`}>
 
                 <input type="file" accept=".floxt" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />
 

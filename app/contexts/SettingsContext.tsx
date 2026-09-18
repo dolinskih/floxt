@@ -72,22 +72,43 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const root = window.document.documentElement;
-        const applyTheme = () => {
+        let isDark = false;
+
+        if (theme === 'system') {
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            isDark = systemPrefersDark;
+        } else {
+            isDark = theme === 'dark';
+        }
+
+        if (isDark) {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+
+        // Notify Tauri to change the native window backdrop
+        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+            import("@tauri-apps/api/core").then(({ invoke }) => {
+                invoke("update_window_theme", { isDark }).catch(console.error);
+            });
+        }
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = () => {
             if (theme === 'system') {
-                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (systemPrefersDark) root.classList.add('dark');
+                const dark = mediaQuery.matches;
+                if (dark) root.classList.add('dark');
                 else root.classList.remove('dark');
-            } else if (theme === 'dark') {
-                root.classList.add('dark');
-            } else {
-                root.classList.remove('dark');
+
+                if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+                    import("@tauri-apps/api/core").then(({ invoke }) => {
+                        invoke("update_window_theme", { isDark: dark }).catch(console.error);
+                    });
+                }
             }
         };
 
-        applyTheme();
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const handleChange = () => { if (theme === 'system') applyTheme(); };
-        
         mediaQuery.addEventListener('change', handleChange);
         return () => mediaQuery.removeEventListener('change', handleChange);
     }, [theme]);

@@ -30,17 +30,22 @@ export default function Home() {
         handleDeleteFileFromProject, executeDelete
     } = useProjectManager();
 
-    // Check if current note OR any note in the project has unsaved edits
     const hasAnyUnsavedChanges = hasUnsavedChanges || Object.values(unsavedFilesTracker).some(Boolean);
     const hasUnsavedRef = useRef(hasAnyUnsavedChanges);
+    hasUnsavedRef.current = hasAnyUnsavedChanges;
 
     useEffect(() => {
-        hasUnsavedRef.current = hasAnyUnsavedChanges;
-    }, [hasAnyUnsavedChanges]);
+        const loader = document.getElementById("initial-loader");
+        if (loader) {
+            loader.classList.add("loader-hidden");
+            const timer = setTimeout(() => loader.remove(), 260);
+            return () => clearTimeout(timer);
+        }
+    }, []);
 
-    // Intercept window close requested event
     useEffect(() => {
-        let unlisten: (() => void) | undefined;
+        let isMounted = true;
+        let unlistenFn: (() => void) | undefined;
 
         const setupCloseListener = async () => {
             if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
@@ -51,12 +56,18 @@ export default function Home() {
                 const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
                 const appWindow = getCurrentWebviewWindow();
 
-                unlisten = await appWindow.onCloseRequested(async (event) => {
+                const unlisten = await appWindow.onCloseRequested(async (event) => {
                     if (hasUnsavedRef.current) {
                         event.preventDefault();
                         setIsExitWarningOpen(true);
                     }
                 });
+
+                if (!isMounted) {
+                    unlisten();
+                } else {
+                    unlistenFn = unlisten;
+                }
             } catch (err) {
                 console.error("Failed to register close listener:", err);
             }
@@ -65,7 +76,8 @@ export default function Home() {
         setupCloseListener();
 
         return () => {
-            if (unlisten) unlisten();
+            isMounted = false;
+            if (unlistenFn) unlistenFn();
         };
     }, []);
 

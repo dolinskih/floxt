@@ -25,8 +25,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${cascadiaCode.variable} m-0 p-0 overflow-hidden bg-transparent text-neutral-900 dark:text-white`}>
+    <html lang="en" className="dark">
+      <body
+        className={`${cascadiaCode.variable} m-0 p-0 overflow-hidden bg-transparent text-neutral-900 dark:text-white`}
+      >
+        {/* Pre-hydration splash overlay */}
+        <div id="initial-loader">
+          <img
+            src="/floxt_icon_1024x1024.png"
+            alt="Floxt"
+            className="pulse-icon w-20 h-20 object-contain select-none pointer-events-none"
+          />
+        </div>
+
         <SettingsProvider>
           <Titlebar />
           {children}

@@ -1,20 +1,24 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import PanelLayout from "./PanelLayout";
-import TextEditor from "./TextEditor";
-import NoteTitle from "./NoteTitle";
-import ConfirmModal from "./ConfirmModal";
-import WelcomeGuideModal from "./WelcomeGuideModal";
+import PanelLayout from "./components/layout/PanelLayout";
+import TextEditor from "./components/editor/TextEditor";
+import NoteTitle from "./components/editor/NoteTitle";
+import ConfirmModal from "./components/modals/ConfirmModal";
+import WelcomeGuideModal from "./components/modals/WelcomeGuideModal";
 import { useSettings } from "./contexts/SettingsContext";
 import { useProjectManager } from "./hooks/useProjectManager";
-import ExitWarningModal from "./ExitWarningModal";
+import ExitWarningModal from "./components/modals/ExitWarningModal";
 
 export default function Home() {
+    // Global editor and UI layout preferences retrieved from context
     const { panelPosition, viewMode, setViewMode, fontSize, showLineNumbers, lineWrap } = useSettings();
+
+    // Modal visibility states for the welcome guide and exit interception dialog
     const [isWelcomeGuideOpen, setIsWelcomeGuideOpen] = useState(false);
     const [isExitWarningOpen, setIsExitWarningOpen] = useState(false);
 
+    // Main project and document management state/handlers
     const {
         text, setText, title, setTitle,
         filePath, setFilePath,
@@ -30,10 +34,13 @@ export default function Home() {
         handleDeleteFileFromProject, executeDelete
     } = useProjectManager();
 
+    // Check if the current note or any opened project document has unsaved modifications
     const hasAnyUnsavedChanges = hasUnsavedChanges || Object.values(unsavedFilesTracker).some(Boolean);
+    // Keep a mutable ref synchronized with the unsaved state for the native Tauri close callback
     const hasUnsavedRef = useRef(hasAnyUnsavedChanges);
     hasUnsavedRef.current = hasAnyUnsavedChanges;
 
+    // 1. Remove initial pre-hydration splash overlay once the React tree mounts
     useEffect(() => {
         const loader = document.getElementById("initial-loader");
         if (loader) {
@@ -43,6 +50,7 @@ export default function Home() {
         }
     }, []);
 
+    // 2. Intercept native window close events via Tauri when unsaved changes exist
     useEffect(() => {
         let isMounted = true;
         let unlistenFn: (() => void) | undefined;
@@ -56,6 +64,7 @@ export default function Home() {
                 const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
                 const appWindow = getCurrentWebviewWindow();
 
+                // Listen for native close requests (e.g. titlebar close button, Alt+F4)
                 const unlisten = await appWindow.onCloseRequested(async (event) => {
                     if (hasUnsavedRef.current) {
                         event.preventDefault();
@@ -75,12 +84,14 @@ export default function Home() {
 
         setupCloseListener();
 
+        // Clean up close listener when unmounting
         return () => {
             isMounted = false;
             if (unlistenFn) unlistenFn();
         };
     }, []);
 
+    // Force close/destroy the native Tauri window or fallback to standard window.close()
     const handleForceExit = async () => {
         if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
             const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
@@ -91,6 +102,7 @@ export default function Home() {
         }
     };
 
+    // 3. Show the welcome guide modal automatically on the very first launch
     useEffect(() => {
         const hasSeenGuide = localStorage.getItem("floxt_has_seen_guide");
         if (!hasSeenGuide) {
@@ -98,6 +110,7 @@ export default function Home() {
         }
     }, []);
 
+    // Dismiss welcome guide and mark it as seen in localStorage
     const handleCloseGuide = () => {
         setIsWelcomeGuideOpen(false);
         localStorage.setItem("floxt_has_seen_guide", "true");
@@ -105,6 +118,7 @@ export default function Home() {
 
     return (
         <main className={`flex w-full h-[calc(100vh-30px)] mt-[30px] p-4 gap-6 overflow-y-auto bg-transparent transition-colors duration-200 ${panelPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
+            {/* Sidebar navigation and file management panel */}
             <PanelLayout
                 text={text}
                 setText={setText}
@@ -130,7 +144,9 @@ export default function Home() {
                 onOpenGuide={() => setIsWelcomeGuideOpen(true)}
             />
 
+            {/* Central editing workspace */}
             <div className="flex-1 flex flex-col min-w-0">
+                {/* Project tab bar for opened documents */}
                 {projectName && activeFiles.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
                         {activeFiles.map((file, idx) => (
@@ -154,7 +170,10 @@ export default function Home() {
                     </div>
                 )}
 
+                {/* Editable note title component */}
                 <NoteTitle title={title} setTitle={setTitle} />
+
+                {/* Core markdown and text editor component */}
                 <TextEditor
                     text={text}
                     setText={setText}
@@ -166,6 +185,7 @@ export default function Home() {
                 />
             </div>
 
+            {/* Modal dialog confirming file deletion */}
             <ConfirmModal
                 isOpen={isConfirmDeleteOpen}
                 onClose={() => setIsConfirmDeleteOpen(false)}
@@ -174,11 +194,13 @@ export default function Home() {
                 message={`Are you sure you want to permanently delete "${fileToDelete?.split(/[\\/]/).pop()}"? This action cannot be undone.`}
             />
 
+            {/* Introductory guide modal for first-time users */}
             <WelcomeGuideModal
                 isOpen={isWelcomeGuideOpen}
                 onClose={handleCloseGuide}
             />
 
+            {/* Exit confirmation modal intercepting close events with unsaved work */}
             <ExitWarningModal
                 isOpen={isExitWarningOpen}
                 onClose={() => setIsExitWarningOpen(false)}

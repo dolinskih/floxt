@@ -1,5 +1,3 @@
-import React from 'react';
-
 // --- 1. DOM UTILS ---
 // Creates a blob from text content and triggers an automatic browser download.
 export const triggerDownload = (content: string, filename: string, mimeType: string) => {
@@ -302,76 +300,76 @@ export const convertFloxtToMarkdown = (text: string): string => {
 // Generates a fully contained HTML document string suitable for file export or PDF printing.
 export const generateHTML = (text: string, fileName: string): string => {
     let html = text
-            .replace(/&/g, '__FLXT_AMP__')
-            .replace(/</g, '__FLXT_LT__')
-            .replace(/>/g, '__FLXT_GT__');
-        let previous;
+        .replace(/&/g, '__FLXT_AMP__')
+        .replace(/</g, '__FLXT_LT__')
+        .replace(/>/g, '__FLXT_GT__');
+    let previous;
 
-        do {
-            previous = html;
-            html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
-                switch (tag) {
-                    case 'h1': return `<h1>${content}</h1>`;
-                    case 'h2': return `<h2>${content}</h2>`;
-                    case 'h3': return `<h3>${content}</h3>`;
-                    case 'h4': return `<h4>${content}</h4>`;
-                    case 'h5': return `<h5>${content}</h5>`;
-                    case 'h6': return `<h6>${content}</h6>`;
-                    case 'b': return `<strong>${content}</strong>`;
-                    case 'i': return `<em>${content}</em>`;
-                    case 'u': return `<u>${content}</u>`;
-                    case 's': return `<del>${content}</del>`;
-                    case 'h': return `<mark>${content}</mark>`;
-                    case '-': {
-                        const listItems = content.trim().replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li>$1</li>');
-                        return `<ul>\n${listItems}\n</ul>`;
-                    }
-                    case '0':
-                    case 'O': {
-                        const listItems = content.trim().replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li>$1</li>');
-                        return `<ol>\n${listItems}\n</ol>`;
-                    }
-                    case 'code': {
-                        const cleanContent = content.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
-                        return `<pre><code>${cleanContent}</code></pre>`;
-                    }
-
-                    case 'table': {
-                        const lines = content.trim().split(/\r?\n/);
-                        if (lines.length === 0) return '';
-
-                        const headers = lines[0].split('|').map((cell: string) => `<th>${cell.trim()}</th>`).join('');
-                        const thead = `<thead><tr>${headers}</tr></thead>`;
-
-                        let tbody = '';
-                        if (lines.length > 1) {
-                            const rows = lines.slice(1).map((line: string) => {
-                                const cells = line.split('|').map((cell: string) => `<td>${cell.trim()}</td>`).join('');
-                                return `<tr>${cells}</tr>`;
-                            }).join('');
-                            tbody = `<tbody>${rows}</tbody>`;
-                        }
-                        return `<table>${thead}${tbody}</table>`;
-                    }
-
-                    default: return content;
+    do {
+        previous = html;
+        html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
+            switch (tag) {
+                case 'h1': return `<h1>${content}</h1>`;
+                case 'h2': return `<h2>${content}</h2>`;
+                case 'h3': return `<h3>${content}</h3>`;
+                case 'h4': return `<h4>${content}</h4>`;
+                case 'h5': return `<h5>${content}</h5>`;
+                case 'h6': return `<h6>${content}</h6>`;
+                case 'b': return `<strong>${content}</strong>`;
+                case 'i': return `<em>${content}</em>`;
+                case 'u': return `<u>${content}</u>`;
+                case 's': return `<del>${content}</del>`;
+                case 'h': return `<mark>${content}</mark>`;
+                case '-': {
+                    const listItems = content.trim().replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li>$1</li>');
+                    return `<ul>\n${listItems}\n</ul>`;
                 }
-            });
+                case '0':
+                case 'O': {
+                    const listItems = content.trim().replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li>$1</li>');
+                    return `<ol>\n${listItems}\n</ol>`;
+                }
+                case 'code': {
+                    const cleanContent = content.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
+                    return `<pre><code>${cleanContent}</code></pre>`;
+                }
 
-            html = html.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, placeholder) => `<a href="${url}">${placeholder}</a>`);
-            html = html.replace(/\/img;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, altText) => `<img src="${url}" alt="${altText}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" loading="lazy" />`);
+                case 'table': {
+                    const lines = content.trim().split(/\r?\n/);
+                    if (lines.length === 0) return '';
 
-        } while (html !== previous);
+                    const headers = lines[0].split('|').map((cell: string) => `<th>${cell.trim()}</th>`).join('');
+                    const thead = `<thead><tr>${headers}</tr></thead>`;
 
-        html = html.replace(/\/\[\];/g, '<input type="checkbox" disabled />');
-        html = html.replace(/\/\[x\];/gi, '<input type="checkbox" checked disabled />');
+                    let tbody = '';
+                    if (lines.length > 1) {
+                        const rows = lines.slice(1).map((line: string) => {
+                            const cells = line.split('|').map((cell: string) => `<td>${cell.trim()}</td>`).join('');
+                            return `<tr>${cells}</tr>`;
+                        }).join('');
+                        tbody = `<tbody>${rows}</tbody>`;
+                    }
+                    return `<table>${thead}${tbody}</table>`;
+                }
 
-        html = html
-            .replace(/__FLXT_AMP__/g, '&amp;')
-            .replace(/__FLXT_LT__/g, '&lt;')
-            .replace(/__FLXT_GT__/g, '&gt;');
+                default: return content;
+            }
+        });
 
-        return `
+        html = html.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, placeholder) => `<a href="${url}">${placeholder}</a>`);
+        html = html.replace(/\/img;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, altText) => `<img src="${url}" alt="${altText}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" loading="lazy" />`);
+
+    } while (html !== previous);
+
+    html = html.replace(/\/\[\];/g, '<input type="checkbox" disabled />');
+    html = html.replace(/\/\[x\];/gi, '<input type="checkbox" checked disabled />');
+
+    html = html
+        .replace(/__FLXT_AMP__/g, '&amp;')
+        .replace(/__FLXT_LT__/g, '&lt;')
+        .replace(/__FLXT_GT__/g, '&gt;');
+
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>

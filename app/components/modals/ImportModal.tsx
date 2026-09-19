@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import Modal from './Modal';
 import { FileUp } from 'lucide-react';
-import { convertMarkdownToFloxt } from './utils/floxtParser';
+import { convertMarkdownToFloxt } from '../../utils/floxtParser';
 
 // Describes the structure for state control and the callback firing upon import completion.
 interface ImportModalProps {

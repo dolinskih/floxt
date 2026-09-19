@@ -1,10 +1,8 @@
 "use client"; // Flags the component to run exclusively on the client.
 
-import React from "react";
 import Modal from "./Modal";
 import { Download } from "lucide-react";
-import { generateHTML, convertFloxtToMarkdown, triggerDownload } from "./utils/floxtParser";
-import { mdxCompile } from "next/dist/build/swc/generated-native";
+import { generateHTML, convertFloxtToMarkdown, triggerDownload } from "../../utils/floxtParser";
 
 // Sets up the properties needed to access the raw text and proposed file title.
 interface ExportModalProps {

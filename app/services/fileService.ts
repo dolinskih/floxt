@@ -46,7 +46,7 @@ export const fileService = {
     // Wraps Tauri's native OS file save dialog, handling empty title fallbacks automatically
     saveNewNoteDialog: async (defaultTitle: string): Promise<string | null> => {
         const defaultPath = defaultTitle.trim() === "" ? "" : `${defaultTitle}.floxt`;
-        
+
         return await save({
             title: 'Save New Note',
             defaultPath,

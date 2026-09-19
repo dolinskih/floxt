@@ -2,8 +2,9 @@
 
 import React, { useRef, useState, useLayoutEffect, useEffect } from "react";
 import { open } from '@tauri-apps/plugin-shell';
-import { highlightFloxt, parseFloxt } from "./utils/floxtParser";
+import { highlightFloxt, parseFloxt } from "../../utils/floxtParser";
 
+// Props interface for the core editor component
 interface TextEditorProps {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
@@ -15,18 +16,20 @@ interface TextEditorProps {
 }
 
 export default function TextEditor({ text, setText, viewMode, setViewMode, fontSize, showLineNumbers, lineWrap }: TextEditorProps) {
+    // DOM element references for synchronization, scrolling, and measurement
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const preRef = useRef<HTMLDivElement>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
     const measureContainerRef = useRef<HTMLDivElement>(null);
 
+    // Dynamic line heights for wrapped line number alignment
     const [lineHeights, setLineHeights] = useState<number[]>([]);
     const [editorWidth, setEditorWidth] = useState<number>(0);
 
     const rawLines = (text || "").split('\n');
     const lineHeightPx = fontSize * 1.5;
 
-    // Track editor width so measurement clone exactly matches textarea wrapping width
+    // Track editor width so the offscreen measurement clone exactly matches textarea wrapping width
     useEffect(() => {
         if (!textareaRef.current) return;
         const observer = new ResizeObserver((entries) => {
@@ -38,7 +41,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         return () => observer.disconnect();
     }, [viewMode]);
 
-    // Measure the exact rendered height of every line when text, font size, wrapping, or width changes
+    // Measure the exact rendered height of every wrapped line when content, font size, or width changes
     useLayoutEffect(() => {
         if (!lineWrap) {
             setLineHeights([]);
@@ -52,12 +55,13 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         }
     }, [text, fontSize, lineWrap, editorWidth, lineHeightPx]);
 
+    // Handle keydown events: indentation, automatic tag completion, list generation, and caret navigation
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const target = e.target as HTMLTextAreaElement;
         const start = target.selectionStart;
         const end = target.selectionEnd;
 
-        // Tab Indentation
+        // Insert 4 spaces on Tab key press instead of blurring the textarea
         if (e.key === 'Tab') {
             e.preventDefault();
             const newText = text.substring(0, start) + "    " + text.substring(end);
@@ -70,7 +74,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
-        // Auto-close tags when typing ';'
+        // Auto-close Floxt markup tags upon typing ';' delimiter
         if (e.key === ';') {
             const textBefore = text.substring(0, start);
             const match = textBefore.match(/\/([a-zA-Z0-9-]+)$/);
@@ -80,6 +84,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                 const standardTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', 'h', '-', '0', 'o', 'code', 'table'];
                 const complexTags = ['link', 'img'];
 
+                // Standard closing tag insertion
                 if (standardTags.includes(tag)) {
                     e.preventDefault();
                     const newText = text.substring(0, start) + ";;/" + text.substring(end);
@@ -88,6 +93,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                         if (textareaRef.current) textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 1;
                     }, 0);
                     return;
+                    // Complex tag scaffold generation for links and images
                 } else if (complexTags.includes(tag)) {
                     e.preventDefault();
                     const newText = text.substring(0, start) + ";url;description;/" + text.substring(end);
@@ -103,12 +109,13 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             }
         }
 
-        // Auto-list items when pressing Enter inside a list block
+        // Automatically continue list prefixes when pressing Enter inside a list container
         if (e.key === 'Enter') {
             const textBefore = text.substring(0, start);
             const matches = [...textBefore.matchAll(/(\/([a-z0-9-]+);|;\/)/gi)];
             const stack: string[] = [];
 
+            // Parse opening/closing tag stack to determine enclosing markup context
             for (const m of matches) {
                 if (m[0] === ';/') {
                     stack.pop();
@@ -130,7 +137,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             }
         }
 
-        // Smart Navigation & Selection
+        // Quick skip and parameter selection using arrow keys
         if (e.key === 'ArrowRight') {
             if (start === end) {
                 if (text.substring(start, start + 2) === ';/') {
@@ -170,7 +177,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             }
         }
 
-        // Smart Backspace (delete auto-closed tags)
+        // Smart Backspace to remove matched closing delimiters when deleting tag markers
         if (e.key === 'Backspace' && start === end) {
             const textBefore = text.substring(0, start);
             const textAfter = text.substring(end);
@@ -203,6 +210,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         }
     };
 
+    // Synchronize scrolling between invisible textarea, syntax overlay pre, and line numbers column
     const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
         if (preRef.current) {
             preRef.current.scrollTop = e.currentTarget.scrollTop;
@@ -213,9 +221,11 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         }
     };
 
+    // Interactive event delegator for rendered HTML inside read/split view
     const handleReadViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.target as HTMLElement;
 
+        // Code block copy buttons
         const copyBtn = target.closest('.floxt-copy-btn') as HTMLButtonElement;
         if (copyBtn) {
             e.preventDefault();
@@ -237,6 +247,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
+        // External link handling via Tauri shell plugin or browser window
         const anchor = target.closest('a');
         if (anchor && anchor.href) {
             e.preventDefault();
@@ -249,6 +260,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
+        // Toggle interactive checkboxes directly within rendered HTML
         if (target.tagName === 'INPUT' && target.classList.contains('floxt-checkbox')) {
             const targetIndex = parseInt(target.getAttribute('data-cb-index') || "-1", 10);
             if (targetIndex > -1) {
@@ -266,6 +278,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
+        // Ctrl/Cmd + Click: Jump directly from rendered element to raw source in editor
         if ((e.ctrlKey || e.metaKey) && (viewMode === 'read' || viewMode === 'split')) {
             e.preventDefault();
             if (target === e.currentTarget) return;
@@ -296,6 +309,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         }
     };
 
+    // Calculate document statistics
     const safeText = text || "";
     const charsCount = safeText.length;
     const wordsCount = safeText.trim() === "" ? 0 : safeText.trim().split(/\s+/).length;
@@ -309,7 +323,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
 
     return (
         <div className="w-full flex-1 min-h-[600px] bg-white dark:bg-neutral-900 rounded-lg border border-neutral-300 dark:border-neutral-700 shadow-sm dark:shadow-lg flex flex-col overflow-hidden relative transition-colors duration-200">
-            
+
             {/* Offscreen Measurement Clone: Measures exact wrapped heights using identical container width & styles */}
             {lineWrap && editorWidth > 0 && (
                 <div
@@ -333,7 +347,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             <div className="flex flex-1 w-full overflow-hidden">
                 {(viewMode === 'code' || viewMode === 'split') && (
                     <div className={`flex flex-1 overflow-hidden relative ${viewMode === 'split' ? 'border-r border-neutral-300 dark:border-neutral-700' : ''}`}>
-                        
+
                         {/* Line Numbers Column */}
                         {showLineNumbers && (
                             <div
@@ -356,19 +370,21 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                             </div>
                         )}
 
+                        {/* Editor Container with Syntax Overlay */}
                         <div className="relative flex-1 overflow-hidden bg-transparent">
+                            {/* Syntax-highlighted text preview layer */}
                             <div
                                 ref={preRef}
                                 style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-                                className={`absolute inset-0 px-4 py-4 pb-4 font-mono text-neutral-900 dark:text-gray-200 pointer-events-none overflow-hidden ${
-                                    lineWrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'
-                                }`}
+                                className={`absolute inset-0 px-4 py-4 pb-4 font-mono text-neutral-900 dark:text-gray-200 pointer-events-none overflow-hidden ${lineWrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'
+                                    }`}
                                 aria-hidden="true"
                             >
                                 {highlightFloxt(text)}
                                 {safeText.endsWith('\n') ? <br /> : null}
                             </div>
 
+                            {/* Transparent editable textarea capturing keystrokes directly above highlighting */}
                             <textarea
                                 ref={textareaRef}
                                 value={text}
@@ -376,9 +392,8 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                                 onScroll={handleScroll}
                                 onKeyDown={handleKeyDown}
                                 style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-                                className={`absolute inset-0 px-4 py-4 pb-4 font-mono bg-transparent text-transparent caret-black dark:caret-white resize-none outline-none z-10 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 ${
-                                    lineWrap ? 'whitespace-pre-wrap break-words overflow-y-auto overflow-x-hidden' : 'whitespace-pre overflow-auto'
-                                }`}
+                                className={`absolute inset-0 px-4 py-4 pb-4 font-mono bg-transparent text-transparent caret-black dark:caret-white resize-none outline-none z-10 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 ${lineWrap ? 'whitespace-pre-wrap break-words overflow-y-auto overflow-x-hidden' : 'whitespace-pre overflow-auto'
+                                    }`}
                                 placeholder="Start typing your note here in Floxt format..."
                                 spellCheck="false"
                             />
@@ -386,6 +401,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     </div>
                 )}
 
+                {/* Rendered HTML preview pane */}
                 {(viewMode === 'read' || viewMode === 'split') && (
                     <div
                         onClick={handleReadViewClick}
@@ -396,6 +412,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                 )}
             </div>
 
+            {/* Document Statistics Footer Bar */}
             <div className="flex-none bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-300/50 dark:border-neutral-700/50 px-4 py-1.5 flex justify-end items-center text-xs text-neutral-500 dark:text-neutral-400 font-mono select-none z-20 transition-colors duration-200">
                 <span>{wordsCount} words</span>
                 <span className="mx-2 text-neutral-300 dark:text-neutral-600">•</span>

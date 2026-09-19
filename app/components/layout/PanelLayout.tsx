@@ -2,18 +2,20 @@
 
 import { Plus, SquareArrowOutUpRight, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud, Columns, Upload, Library, Trash } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
-import Modal from "./Modal";
-import ExportModal from "./ExportModal";
-import { fileService } from './services/fileService';
-import ImportModal from './ImportModal';
-import { useSettings } from './contexts/SettingsContext';
+import Modal from "../modals/Modal";
+import ExportModal from "../modals/ExportModal";
+import { fileService } from '../../services/fileService';
+import ImportModal from '../modals/ImportModal';
+import { useSettings } from '../../contexts/SettingsContext';
 
+// Model definition for files managed within a project folder
 export interface ProjectFile {
     name: string;
     path: string;
     hasUnsavedChanges: boolean;
 }
 
+// Props interface for panel controls, state bindings, and project delegation
 interface PanelLayoutProps {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
@@ -36,6 +38,7 @@ interface PanelLayoutProps {
     onOpenGuide?: () => void;
 }
 
+// Reference guide for custom markup and markdown command tags
 const commandsData = [
     { icon: "H1", name: "Heading 1", open: "/h1;", close: ";/" },
     { icon: "H2", name: "Heading 2", open: "/h2;", close: ";/" },
@@ -61,6 +64,7 @@ const commandsData = [
 export default function PanelLayout({
     text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, filePath, setFilePath, projectName, projectFiles, onOpenProject, onOpenFileFromProject, onSaveFileFromProject, onNewFileSaved, onDeleteFileFromProject, onOpenGuide
 }: PanelLayoutProps) {
+    // Consume application settings from context
     const {
         viewMode, setViewMode,
         fontSize, setFontSize,
@@ -72,6 +76,7 @@ export default function PanelLayout({
         lineWrap, setLineWrap
     } = useSettings();
 
+    // Local UI states: panel collapse, web file handles, and modal visibilities
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,8 +87,10 @@ export default function PanelLayout({
     const [isImportOpen, setIsImportOpen] = useState<boolean>(false);
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
+    // Progressive Web App install prompt reference
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
+    // Capture PWA installation prompt if running in a supported browser
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
@@ -93,6 +100,7 @@ export default function PanelLayout({
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
 
+    // Trigger PWA installation prompt dialog
     const handleInstallClick = async () => {
         if (!deferredPrompt) return;
         const promptEvent = deferredPrompt as any;
@@ -103,6 +111,7 @@ export default function PanelLayout({
         }
     };
 
+    // Reset workspace to a clean, untitled note
     const handleNew = useCallback(() => {
         setText("");
         setTitle("");
@@ -113,6 +122,7 @@ export default function PanelLayout({
         setFilePath(null);
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked, setFilePath]);
 
+    // Save active note: updates existing file or triggers native save dialog for new notes
     const handleSave = useCallback(async () => {
         if (filePath) {
             try {
@@ -128,6 +138,7 @@ export default function PanelLayout({
                 console.error("Failed to save:", error);
             }
         } else {
+            // Use native file dialog when running in Tauri desktop environment
             if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
                 try {
                     const newPath = await fileService.saveNewNoteDialog(title);
@@ -153,6 +164,7 @@ export default function PanelLayout({
         }
     }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath, onNewFileSaved]);
 
+    // Debounced autosave mechanism for saved/tracked files
     useEffect(() => {
         if (autoSave && isFileTracked && (fileHandle || filePath) && hasUnsavedChanges) {
             const timeoutId = setTimeout(() => {
@@ -162,6 +174,7 @@ export default function PanelLayout({
         }
     }, [text, autoSave, isFileTracked, fileHandle, filePath, hasUnsavedChanges, handleSave]);
 
+    // Open file using File System Access API with fallback to standard input
     const handleOpenClick = useCallback(async () => {
         try {
             if ('showOpenFilePicker' in window) {
@@ -186,6 +199,7 @@ export default function PanelLayout({
         fileInputRef.current?.click();
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
+    // Copy command syntax to clipboard and display feedback animation
     const handleCopy = (textToCopy: string, id: string) => {
         if (textToCopy === 'None') return;
         navigator.clipboard.writeText(textToCopy);
@@ -193,8 +207,10 @@ export default function PanelLayout({
         setTimeout(() => setCopiedCommand(null), 2000);
     };
 
+    // Global keyboard shortcut listeners for file operations, view switches, and panels
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Save and Open shortcuts
             if (e.ctrlKey || e.metaKey) {
                 if (e.key.toLowerCase() === 's') {
                     e.preventDefault();
@@ -207,6 +223,7 @@ export default function PanelLayout({
                 }
             }
 
+            // Alt shortcuts for navigation and toggles
             if (e.altKey) {
                 if (e.key.toLowerCase() === 't') {
                     e.preventDefault();
@@ -256,6 +273,7 @@ export default function PanelLayout({
         return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
     }, [handleNew, handleSave, handleOpenClick, setViewMode, onOpenProject]);
 
+    // Fallback file input handler for opening notes in browsers without picker support
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -277,6 +295,7 @@ export default function PanelLayout({
         e.target.value = "";
     };
 
+    // Load imported document contents into the editor
     const handleImport = useCallback((importedTitle: string, importedContent: string) => {
         setText(importedContent);
         setTitle(importedTitle);
@@ -290,6 +309,7 @@ export default function PanelLayout({
 
     return (
         <div className="sticky top-4 self-start flex flex-col gap-2 w-fit h-fit items-center z-50">
+            {/* Project explorer: lists documents within the active project directory */}
             {projectName && isOpen && (
                 <section className="p-3 bg-white/60 dark:bg-neutral-900/60 border border-neutral-300 dark:border-neutral-700 rounded-lg w-full flex flex-col gap-2 shadow-sm backdrop-blur-md">
                     <h3 className="font-bold text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-800 pb-2 mb-1 truncate" title={projectName}>
@@ -299,6 +319,7 @@ export default function PanelLayout({
                         {projectFiles?.map((file, idx) => (
                             <div key={idx} className="flex items-center justify-between group text-sm p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 rounded transition-colors">
                                 <div className="flex items-center gap-2 overflow-hidden pr-2">
+                                    {/* Unsaved changes indicator dot */}
                                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${file.hasUnsavedChanges ? 'bg-yellow-500' : 'bg-transparent'}`} />
                                     <span className="truncate text-neutral-700 dark:text-neutral-300 font-medium">{file.name}</span>
                                 </div>
@@ -319,14 +340,16 @@ export default function PanelLayout({
                 </section>
             )}
 
-            {/* Side Panel Actions */}
+            {/* Main Action Sidebar */}
             <section className={`p-3 h-fit bg-white/60 dark:bg-neutral-900/60 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm backdrop-blur-md`}>
 
+                {/* Hidden file input element for browser file reading */}
                 <input type="file" accept=".floxt" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />
 
                 {isOpen && (
                     <div className={`overflow-hidden transition-all duration-150 ease-in-out flex flex-col ${isOpen ? 'max-h-[600px] max-w-[300px] opacity-100' : 'max-h-0 max-w-0 opacity-0'}`}>
 
+                        {/* Create new document button */}
                         <button onClick={handleNew} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Plus size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -335,6 +358,7 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        {/* Save active document button */}
                         <button onClick={handleSave} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Save size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -343,6 +367,7 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        {/* Open single note button */}
                         <button onClick={handleOpenClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <SquareArrowOutUpRight size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -351,6 +376,7 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        {/* Open folder as project button */}
                         <button onClick={onOpenProject} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Library size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -359,6 +385,7 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        {/* Open file import dialog */}
                         <button onClick={() => setIsImportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Upload size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -367,6 +394,7 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        {/* Open file export modal */}
                         <button onClick={() => setIsExportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Download size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -375,6 +403,7 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        {/* Open formatting commands cheat-sheet */}
                         <button onClick={() => setIsCommandsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Terminal size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -383,6 +412,7 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        {/* Open editor preferences modal */}
                         <button onClick={() => setIsSettingsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
                             <Cog size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
@@ -391,6 +421,7 @@ export default function PanelLayout({
                             </div>
                         </button>
 
+                        {/* Conditionally render PWA installation button */}
                         {deferredPrompt && (
                             <button onClick={handleInstallClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-800 group"}>
                                 <DownloadCloud size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
@@ -403,6 +434,7 @@ export default function PanelLayout({
                     </div>
                 )}
 
+                {/* Sidebar expand / collapse toggle button */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     title={showShortcuts ? "Toggle panel (Alt+T)" : "Toggle panel"}
@@ -424,8 +456,9 @@ export default function PanelLayout({
                 </button>
             </section>
 
-            {/* View Switcher Controls */}
+            {/* View Switcher Controls: Code, Split, or Read modes */}
             <div className={`flex gap-2 p-1.5 transition-all duration-150 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-sm ${isOpen ? 'w-full flex-row' : 'w-fit flex-col'}`}>
+                {/* Code-only view */}
                 <button
                     onClick={() => setViewMode('code')}
                     title="Alt+1"
@@ -440,6 +473,7 @@ export default function PanelLayout({
                     )}
                 </button>
 
+                {/* Split view (Editor + Markdown Preview) */}
                 <button
                     onClick={() => setViewMode('split')}
                     title="Alt+2"
@@ -454,6 +488,7 @@ export default function PanelLayout({
                     )}
                 </button>
 
+                {/* Read-only rendered view */}
                 <button
                     onClick={() => setViewMode('read')}
                     title="Alt+3"
@@ -469,6 +504,7 @@ export default function PanelLayout({
                 </button>
             </div>
 
+            {/* Document save state badge indicator */}
             {(hasUnsavedChanges || isFileTracked) && (
                 <div className="w-full flex justify-center items-center py-1 select-none">
                     {isOpen ? (
@@ -488,9 +524,11 @@ export default function PanelLayout({
                 </div>
             )}
 
+            {/* Import and Export Dialogs */}
             <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleImport} />
             <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} text={text} title={title} />
 
+            {/* Command syntax reference modal */}
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
                 <div className="max-h-[60vh] overflow-y-auto pr-2">
                     <div className="flex flex-col gap-1 w-full">
@@ -514,8 +552,10 @@ export default function PanelLayout({
                 </div>
             </Modal>
 
+            {/* Application Settings Modal */}
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Settings">
                 <div className="flex flex-col gap-6 p-2">
+                    {/* Font size adjustment */}
                     <div className="flex items-center justify-between">
                         <span className="text-neutral-800 dark:text-gray-200">Editor Font Size</span>
                         <div className="flex items-center gap-4 bg-neutral-100 dark:bg-neutral-950 px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-800">
@@ -524,12 +564,16 @@ export default function PanelLayout({
                             <button onClick={() => setFontSize(f => Math.min(24, f + 1))} className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer active:scale-95">+</button>
                         </div>
                     </div>
+
+                    {/* Toggle line numbers */}
                     <div className="flex items-center justify-between">
                         <span className="text-neutral-800 dark:text-gray-200">Show Line Numbers</span>
                         <button onClick={() => setShowLineNumbers(!showLineNumbers)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showLineNumbers ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showLineNumbers ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Toggle line wrapping */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                             <span className="text-neutral-800 dark:text-gray-200">Wrap Lines</span>
@@ -539,6 +583,8 @@ export default function PanelLayout({
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${lineWrap ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Toggle automatic save */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                             <span className="text-neutral-800 dark:text-gray-200">Auto Save</span>
@@ -548,6 +594,8 @@ export default function PanelLayout({
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${autoSave ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Toggle keyboard shortcuts display in UI */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                             <span className="text-neutral-800 dark:text-gray-200">Show Keyboard Shortcuts</span>
@@ -556,6 +604,8 @@ export default function PanelLayout({
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showShortcuts ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Toggle sidebar placement between left and right */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                             <span className="text-neutral-800 dark:text-gray-200">Pin Panel to Right</span>
@@ -567,6 +617,8 @@ export default function PanelLayout({
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${panelPosition === 'right' ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Application theme selector */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                             <span className="text-neutral-800 dark:text-gray-200">Theme</span>
@@ -581,6 +633,8 @@ export default function PanelLayout({
                             <option value="light">Light Mode</option>
                         </select>
                     </div>
+
+                    {/* Button to manually relaunch the introductory walkthrough */}
                     <div className="flex items-center justify-between pt-2 border-t border-neutral-200 dark:border-neutral-800">
                         <div className="flex flex-col">
                             <span className="text-neutral-800 dark:text-gray-200 text-sm">Welcome Guide</span>

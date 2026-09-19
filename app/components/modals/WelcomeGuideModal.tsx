@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
     Plus,
     Save,
@@ -14,6 +14,7 @@ import {
     X,
 } from "lucide-react";
 
+// Props definition for the WelcomeGuideModal walkthrough
 interface WelcomeGuideModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -23,8 +24,10 @@ export default function WelcomeGuideModal({
     isOpen,
     onClose,
 }: WelcomeGuideModalProps) {
+    // Current step index in the onboarding wizard
     const [step, setStep] = useState<number>(0);
 
+    // Reset walkthrough back to the welcome screen whenever the modal is opened
     useEffect(() => {
         if (isOpen) {
             setStep(0);
@@ -33,8 +36,10 @@ export default function WelcomeGuideModal({
 
     if (!isOpen) return null;
 
+    // Total steps in the flow (Step 0: Welcome screen + 5 feature highlights)
     const totalSteps = 6;
 
+    // Advance to the next walkthrough step or complete and close the modal
     const handleNext = () => {
         if (step < totalSteps - 1) {
             setStep((prev) => prev + 1);
@@ -45,9 +50,10 @@ export default function WelcomeGuideModal({
 
     return (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            {/* Modal card container */}
             <div className="relative w-full max-w-3xl min-h-[480px] bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col justify-between">
                 {step === 0 ? (
-                    /* Step 0: Welcome Screen */
+                    /* Step 0: Initial Welcome & Branding Screen */
                     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                         <div className="w-24 h-24 mb-6 flex items-center justify-center">
                             <img
@@ -80,17 +86,19 @@ export default function WelcomeGuideModal({
                         </div>
                     </div>
                 ) : (
-                    /* Steps 1 - 5: Interactive Guide Steps */
+                    /* Steps 1 - 5: Interactive Split-View Feature Guide */
                     <div className="flex-1 flex flex-col md:flex-row h-full">
-                        {/* Left Content Column */}
+                        {/* Left Content Column: Feature title, description, and navigation */}
                         <div className="flex-1 p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-neutral-200 dark:border-neutral-800">
                             <div>
+                                {/* Step indicator badge */}
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="text-xs font-mono px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 font-medium">
                                         Step {step} of {totalSteps - 1}
                                     </span>
                                 </div>
 
+                                {/* Step 1 description: Side panel overview */}
                                 {step === 1 && (
                                     <div>
                                         <h2 className="text-2xl font-bold font-sans text-neutral-900 dark:text-white mb-3">
@@ -103,6 +111,7 @@ export default function WelcomeGuideModal({
                                     </div>
                                 )}
 
+                                {/* Step 2 description: Syntax formatting commands */}
                                 {step === 2 && (
                                     <div>
                                         <h2 className="text-2xl font-bold font-sans text-neutral-900 dark:text-white mb-3">
@@ -116,6 +125,7 @@ export default function WelcomeGuideModal({
                                     </div>
                                 )}
 
+                                {/* Step 3 description: Multi-document project workflows and tabs */}
                                 {step === 3 && (
                                     <div>
                                         <h2 className="text-2xl font-bold font-sans text-neutral-900 dark:text-white mb-3">
@@ -130,6 +140,7 @@ export default function WelcomeGuideModal({
                                     </div>
                                 )}
 
+                                {/* Step 4 description: File conversion and export support */}
                                 {step === 4 && (
                                     <div>
                                         <h2 className="text-2xl font-bold font-sans text-neutral-900 dark:text-white mb-3">
@@ -142,6 +153,7 @@ export default function WelcomeGuideModal({
                                     </div>
                                 )}
 
+                                {/* Step 5 description: Preferences, themes, and customization */}
                                 {step === 5 && (
                                     <div>
                                         <h2 className="text-2xl font-bold font-sans text-neutral-900 dark:text-white mb-3">
@@ -156,7 +168,7 @@ export default function WelcomeGuideModal({
                                 )}
                             </div>
 
-                            {/* Step Navigation Buttons */}
+                            {/* Wizard navigation controls */}
                             <div className="flex items-center gap-4 mt-8 pt-4">
                                 <button
                                     onClick={handleNext}
@@ -175,8 +187,9 @@ export default function WelcomeGuideModal({
                             </div>
                         </div>
 
-                        {/* Right Interactive Mockup Column */}
+                        {/* Right Interactive Mockup Column: Visual representation for each respective step */}
                         <div className="flex-1 bg-neutral-50 dark:bg-neutral-950 p-6 flex items-center justify-center select-none pointer-events-none">
+                            {/* Step 1 Visual: Side panel navigation mockup */}
                             {step === 1 && (
                                 <div className="w-[210px] p-3 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-md flex flex-col gap-2">
                                     <div className="flex items-center gap-3 px-2 py-1 text-xs font-medium text-neutral-800 dark:text-neutral-200">
@@ -209,6 +222,7 @@ export default function WelcomeGuideModal({
                                 </div>
                             )}
 
+                            {/* Step 2 Visual: Markup command list preview mockup */}
                             {step === 2 && (
                                 <div className="w-[290px] bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-md overflow-hidden flex flex-col">
                                     <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-neutral-800">
@@ -255,9 +269,10 @@ export default function WelcomeGuideModal({
                                 </div>
                             )}
 
+                            {/* Step 3 Visual: Active tabs & project file explorer mockup */}
                             {step === 3 && (
                                 <div className="w-[300px] flex flex-col gap-3">
-                                    {/* File Tabs Mockup */}
+                                    {/* Document tabs */}
                                     <div className="flex gap-1.5 pb-1">
                                         <div className="flex items-center gap-1.5 px-2.5 py-1 border border-neutral-400 dark:border-neutral-500 bg-white dark:bg-neutral-900 rounded-md text-[11px] font-medium shadow-sm text-neutral-900 dark:text-white">
                                             <span>Design plan</span>
@@ -269,7 +284,7 @@ export default function WelcomeGuideModal({
                                         </div>
                                     </div>
 
-                                    {/* Project Folder Mockup */}
+                                    {/* Folder directory listing */}
                                     <div className="p-3 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-md flex flex-col gap-2">
                                         <span className="font-bold text-xs text-neutral-800 dark:text-white border-b border-neutral-200 dark:border-neutral-800 pb-1.5 truncate">
                                             My Project
@@ -304,6 +319,7 @@ export default function WelcomeGuideModal({
                                 </div>
                             )}
 
+                            {/* Step 4 Visual: Export formats dialog preview */}
                             {step === 4 && (
                                 <div className="w-[280px] bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-md p-4 flex flex-col gap-2.5">
                                     <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
@@ -333,6 +349,7 @@ export default function WelcomeGuideModal({
                                 </div>
                             )}
 
+                            {/* Step 5 Visual: Configuration toggles preview */}
                             {step === 5 && (
                                 <div className="w-[280px] bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-md p-4 flex flex-col gap-3">
                                     <div className="flex items-center justify-between pb-1 border-b border-neutral-200 dark:border-neutral-800">

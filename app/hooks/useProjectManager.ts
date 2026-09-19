@@ -8,7 +8,7 @@ export function useProjectManager() {
     const [text, setText] = useState<string>("");
     const [title, setTitle] = useState<string>("");
     const [filePath, setFilePath] = useState<string | null>(null);
-    
+
     // Baseline state used to detect unsaved changes
     const [savedText, setSavedText] = useState<string>("");
     const [savedTitle, setSavedTitle] = useState<string>("");
@@ -17,7 +17,7 @@ export function useProjectManager() {
     const [projectName, setProjectName] = useState<string | null>(null);
     const [projectPath, setProjectPath] = useState<string | null>(null);
     const [projectFiles, setProjectFiles] = useState<{ name: string, path: string }[]>([]);
-    
+
     // Tab management and memory buffering to prevent losing unsaved data when switching files
     const [activeFiles, setActiveFiles] = useState<{ name: string, path: string }[]>([]);
     const [unsavedFilesTracker, setUnsavedFilesTracker] = useState<Record<string, boolean>>({});
@@ -25,7 +25,7 @@ export function useProjectManager() {
 
     // Tracks if the current file exists on disk vs being a purely in-memory "New Note"
     const [isFileTracked, setIsFileTracked] = useState<boolean>(false);
-    
+
     // Deletion modal state
     const [fileToDelete, setFileToDelete] = useState<string | null>(null);
     const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState<boolean>(false);

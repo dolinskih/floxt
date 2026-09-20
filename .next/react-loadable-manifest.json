@@ -1,0 +1,34 @@
+{
+  "app\\Titlebar.tsx -> @tauri-apps/api/window": {
+    "id": 7312,
+    "files": [
+      "static/chunks/312.f431b227916f3fb0.js",
+      "static/chunks/135.3b93bb8d6e6eb290.js"
+    ]
+  },
+  "app\\contexts\\SettingsContext.tsx -> @tauri-apps/api/core": {
+    "id": 3516,
+    "files": [
+      "static/chunks/516.3b93bb8d6e6eb290.js"
+    ]
+  },
+  "app\\page.tsx -> @tauri-apps/api/webviewWindow": {
+    "id": 155,
+    "files": [
+      "static/chunks/312.f431b227916f3fb0.js",
+      "static/chunks/155.72c28cdf5cefc942.js"
+    ]
+  },
+  "node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": 1966,
+    "files": [
+      "static/chunks/966.1775eb621d8d3e09.js"
+    ]
+  },
+  "node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": 3899,
+    "files": [
+      "static/chunks/899.1813981119fa1f8a.js"
+    ]
+  }
+}

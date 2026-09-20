@@ -1,0 +1,650 @@
+{
+  "schema": 3,
+  "generated_at": "2026-09-18T21:13:04.3797912\u002B00:00",
+  "nuget_cache_dir": "C:\\Users\\huber\\.nuget\\packages",
+  "yaml_packages_hash": "86d1766ffdc7d3382ec61e1164eccb389ee1d798b29fb8ab8d23e4b587a1fb23",
+  "packages": [
+    {
+      "name": "Microsoft.Bcl.Numerics",
+      "version": "9.0.0",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.NETCore.Platforms",
+      "version": "1.1.0",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.NETCore.Targets",
+      "version": "1.1.0",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.Web.WebView2",
+      "version": "1.0.3719.77",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.web.webview2\\1.0.3719.77\\lib\\Microsoft.Web.WebView2.Core.winmd"
+      ]
+    },
+    {
+      "name": "Microsoft.Win32.Primitives",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.Windows.AI.MachineLearning",
+      "version": "2.1.74",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.ai.machinelearning\\2.1.74\\metadata\\Microsoft.Windows.AI.MachineLearning.winmd"
+      ]
+    },
+    {
+      "name": "Microsoft.Windows.CppWinRT",
+      "version": "3.0.260818.1",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.Windows.ImplementationLibrary",
+      "version": "1.0.260126.7",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.Windows.SDK.BuildTools",
+      "version": "10.0.26100.4654",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.Windows.SDK.BuildTools.MSIX",
+      "version": "1.7.251221100",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.Windows.SDK.CPP",
+      "version": "10.0.28000.2705",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.AI.Actions.ActionsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.AI.Agents.AgentsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.AI.MachineLearning.MachineLearningContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.AI.MachineLearning.Preview.MachineLearningPreviewContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Activation.ActivatedEventsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Activation.ActivationCameraSettingsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Activation.ContactActivatedEventsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Activation.WebUISearchActivatedEventsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Background.BackgroundAlarmApplicationContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Calls.Background.CallsBackgroundContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Calls.CallsPhoneContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Calls.CallsVoipContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Calls.LockScreenCallContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.CommunicationBlocking.CommunicationBlockingContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.FullTrustAppContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Preview.InkWorkspace.PreviewInkWorkspaceContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Preview.Notes.PreviewNotesContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Preview.StartupAppsPreviewContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Resources.Management.ResourceIndexerContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Search.Core.SearchCoreContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Search.SearchContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.SocialInfo.SocialInfoContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.StartupTaskContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.ApplicationModel.Wallet.WalletContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.Custom.CustomDeviceContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.DevicesLowLevelContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.Portable.PortableDeviceContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.Power.PowerGridApiContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.Printers.Extensions.ExtensionsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.Printers.PrintersContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.Scanners.ScannerDeviceContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.SmartCards.SmartCardBackgroundTriggerContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.SmartCards.SmartCardEmulatorContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Devices.Sms.LegacySmsApiContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Foundation.FoundationContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Foundation.UniversalApiContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Gaming.Input.GamingInputPreviewContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Gaming.Preview.GamesEnumerationContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Gaming.UI.GameChatOverlayContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Gaming.UI.GamingUIProviderContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Gaming.XboxLive.StorageApiContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Globalization.GlobalizationJapanesePhoneticAnalyzerContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Graphics.Printing3D.Printing3DContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Management.Deployment.Preview.DeploymentPreviewContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Management.Deployment.SharedPackageContainerContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Management.Update.Cluster.ClusterNativeUpdatingContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Management.Update.WindowsUpdateContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Management.Workplace.WorkplaceSettingsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.AppBroadcasting.AppBroadcastingContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.AppRecording.AppRecordingContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.Capture.AppBroadcastContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.Capture.AppCaptureContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.Capture.AppCaptureMetadataContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.Capture.CameraCaptureUIContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.Capture.GameBarContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.Devices.CallControlContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.MediaControlContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.Playlists.PlaylistsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Media.Protection.ProtectionRenewalContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Networking.Connectivity.WwanContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Networking.NetworkOperators.LegacyNetworkOperatorsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Networking.Sockets.ControlChannelTriggerContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Networking.XboxLive.XboxLiveSecureSocketsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Perception.Automation.Core.PerceptionAutomationCoreContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Security.EnterpriseData.EnterpriseDataContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Security.ExchangeActiveSyncProvisioning.EasContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Security.Isolation.Isolatedwindowsenvironmentcontract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Services.Maps.GuidanceContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Services.Maps.LocalSearchContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Services.Store.StoreContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Services.TargetedContent.TargetedContentContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Storage.Provider.CloudFilesContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.System.Power.Thermal.PowerThermalApiContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\windows.system.profile.platformautomaticappsignincontract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.System.Profile.ProfileHardwareTokenContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.System.Profile.ProfileRetailInfoContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.System.Profile.ProfileSharedModeContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.System.Profile.SystemManufacturers.SystemManufacturersContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.System.SystemManagementContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.System.UserProfile.UserProfileContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.System.UserProfile.UserProfileLockScreenContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.ApplicationSettings.ApplicationsSettingsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Core.AnimationMetrics.AnimationMetricsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Core.CoreWindowDialogsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Input.Preview.Text.PreviewTextContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Shell.CompanionWindows.CompanionWindowsContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Shell.SecurityAppManagerContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Shell.Tasks.AppTaskContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Shell.WindowTabManagerContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.UIAutomation.UIAutomationContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.ViewManagement.ViewManagementViewScalingContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Xaml.Core.Direct.XamlDirectContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.UI.Xaml.Hosting.HostingContract.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windows.sdk.cpp\\10.0.28000.2705\\c\\References\\10.0.28000.0\\Windows.Web.Http.Diagnostics.HttpDiagnosticsContract.winmd"
+      ]
+    },
+    {
+      "name": "Microsoft.Windows.SDK.CPP.arm64",
+      "version": "10.0.28000.2705",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.Windows.SDK.CPP.x64",
+      "version": "10.0.28000.2705",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK",
+      "version": "2.5.1",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.AI",
+      "version": "2.5.5",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Graphics.Imaging.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.AI.ContentSafety.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.AI.Foundation.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.AI.Imaging.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.AI.Text.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.AI.Video.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.AI.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.SemanticSearch.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.Vision.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.ai\\2.5.5\\metadata\\Microsoft.Windows.Workloads.winmd"
+      ]
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.Base",
+      "version": "2.0.4",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.DWrite",
+      "version": "2.1.0",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.Foundation",
+      "version": "2.3.12",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Security.Authentication.OAuth.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.ApplicationModel.Background.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.ApplicationModel.DynamicDependency.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.ApplicationModel.Resources.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.ApplicationModel.WindowsAppRuntime.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.AppLifecycle.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.AppNotifications.Builder.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.AppNotifications.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.BadgeNotifications.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.Foundation.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.Globalization.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.Management.Deployment.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.Media.Capture.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.PushNotifications.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.Security.AccessControl.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.Storage.Pickers.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.Storage.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.System.Power.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.foundation\\2.3.12\\metadata\\Microsoft.Windows.System.winmd"
+      ]
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.InteractiveExperiences",
+      "version": "2.1.9",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.interactiveexperiences\\2.1.9\\metadata\\10.0.18362.0\\Microsoft.Foundation.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.interactiveexperiences\\2.1.9\\metadata\\10.0.18362.0\\Microsoft.Graphics.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.interactiveexperiences\\2.1.9\\metadata\\10.0.18362.0\\Microsoft.UI.winmd"
+      ]
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.ML",
+      "version": "2.1.94",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.Runtime",
+      "version": "2.5.1",
+      "winmds": []
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.Search",
+      "version": "2.5.5",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.search\\2.5.5\\metadata\\Microsoft.Windows.Search.winmd"
+      ]
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.Widgets",
+      "version": "2.0.5",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.widgets\\2.0.5\\metadata\\Microsoft.Windows.Widgets.winmd"
+      ]
+    },
+    {
+      "name": "Microsoft.WindowsAppSDK.WinUI",
+      "version": "2.3.9",
+      "winmds": [
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.winui\\2.3.9\\metadata\\Microsoft.UI.Text.winmd",
+        "C:\\Users\\huber\\.nuget\\packages\\microsoft.windowsappsdk.winui\\2.3.9\\metadata\\Microsoft.UI.Xaml.winmd"
+      ]
+    },
+    {
+      "name": "NETStandard.Library",
+      "version": "1.6.1",
+      "winmds": []
+    },
+    {
+      "name": "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.native.System",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.native.System.IO.Compression",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.native.System.Net.Http",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.native.System.Security.Cryptography.Apple",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.AppContext",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Buffers",
+      "version": "4.5.1",
+      "winmds": []
+    },
+    {
+      "name": "System.Collections",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Collections.Concurrent",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Console",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Diagnostics.Contracts",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Diagnostics.Debug",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Diagnostics.DiagnosticSource",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Diagnostics.Tools",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Diagnostics.Tracing",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Globalization",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Globalization.Calendars",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Globalization.Extensions",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.IO",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.IO.Compression",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.IO.Compression.ZipFile",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.IO.FileSystem",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.IO.FileSystem.Primitives",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Linq",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Linq.Expressions",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Memory",
+      "version": "4.5.5",
+      "winmds": []
+    },
+    {
+      "name": "System.Net.Http",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Net.Primitives",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Net.Sockets",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Numerics.Tensors",
+      "version": "9.0.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Numerics.Vectors",
+      "version": "4.5.0",
+      "winmds": []
+    },
+    {
+      "name": "System.ObjectModel",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Reflection",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Reflection.Emit",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Reflection.Emit.ILGeneration",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Reflection.Emit.Lightweight",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Reflection.Extensions",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Reflection.Primitives",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Reflection.TypeExtensions",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Resources.ResourceManager",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Runtime",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Runtime.CompilerServices.Unsafe",
+      "version": "4.5.3",
+      "winmds": []
+    },
+    {
+      "name": "System.Runtime.Extensions",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Runtime.Handles",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Runtime.InteropServices",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Runtime.InteropServices.RuntimeInformation",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Runtime.Numerics",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Runtime.WindowsRuntime",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Security.Cryptography.Algorithms",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Security.Cryptography.Cng",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Security.Cryptography.Csp",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Security.Cryptography.Encoding",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Security.Cryptography.Primitives",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Security.Cryptography.X509Certificates",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Text.Encoding",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Text.Encoding.Extensions",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Text.RegularExpressions",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Threading",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Threading.Tasks",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Threading.Timer",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Xml.ReaderWriter",
+      "version": "4.3.0",
+      "winmds": []
+    },
+    {
+      "name": "System.Xml.XDocument",
+      "version": "4.3.0",
+      "winmds": []
+    }
+  ]
+}

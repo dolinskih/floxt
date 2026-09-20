@@ -15,75 +15,50 @@ export const triggerDownload = (content: string, filename: string, mimeType: str
 // --- 2. TEXT EDITOR PARSERS ---
 // Generates syntax-highlighted JSX spans for the raw text editor based on Floxt syntax.
 export const highlightFloxt = (rawText: string) => {
-    const parts = rawText.split(/(\/(?:h[1-6]|h|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/|(?<=\/(?:link|img);[^;]*);)/gi);
+    if (!rawText) return null;
 
-    let openTagsCount = 0;
-    let complexTagState = 0;
+    // Fast tokenizer pattern without expensive regex lookbehinds
+    const parts = rawText.split(/(\/(?:h[1-6]|h|b|i|u|s|-|0|O|code|link|table|img|\[\]|\[x\]);|;\/)/gi);
 
     return parts.map((part, i) => {
-        if (i % 2 !== 0) {
-            // Handles closing tags.
-            if (part === ';/') {
-                complexTagState = 0;
-                if (openTagsCount > 0) {
-                    openTagsCount--;
-                    return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;/</span>;
-                } else {
-                    return <span key={i}>{part}</span>;
-                }
-            }
-
-            // Handles middle separators for complex tags like links or images.
-            if (part === ';') {
-                if (complexTagState === 1) complexTagState = 2;
-                return <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">;</span>;
-            }
-
-            // Applies specific styling colors to opening Floxt tags.
-            const tagMatch = part.match(/^\/(.*);$/i);
-            if (tagMatch) {
-                const tagName = tagMatch[1];
-                const lowerTag = tagName.toLowerCase();
-
-                let colorClass = "text-emerald-600 dark:text-emerald-400";
-                let isSelfClosing = false;
-
-                if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', 'h'].includes(lowerTag)) {
-                    colorClass = "text-yellow-600 dark:text-yellow-500";
-                } else if (['-', '0', 'o'].includes(lowerTag)) {
-                    colorClass = "text-blue-600 dark:text-blue-400";
-                } else if (lowerTag === '[]' || lowerTag === '[x]') {
-                    colorClass = "text-red-600 dark:text-red-500";
-                    isSelfClosing = true;
-                }
-
-                if (!isSelfClosing) openTagsCount++;
-
-                if (lowerTag === 'link' || lowerTag === 'img') {
-                    complexTagState = 1;
-                } else {
-                    complexTagState = 0;
-                }
-
-                return (
-                    <span key={i} className="font-bold">
-                        <span className="text-neutral-400 dark:text-neutral-500">/</span>
-                        <span className={colorClass}>{tagName}</span>
-                        <span className="text-neutral-400 dark:text-neutral-500">;</span>
-                    </span>
-                );
-            }
-        } else {
-            // Formats the metadata attributes of complex tags (URLs, descriptions).
-            if (complexTagState === 1 && part === 'url') {
-                return <span key={i} className="text-neutral-500 dark:text-neutral-600 italic select-all">{part}</span>;
-            }
-            if (complexTagState === 2 && part === 'description') {
-                return <span key={i} className="text-neutral-500 dark:text-neutral-600 italic select-all">{part}</span>;
-            }
-
-            return <span key={i}>{part}</span>;
+        // Plain text is returned directly as a raw string to avoid allocating DOM nodes
+        if (i % 2 === 0) {
+            return part;
         }
+
+        // Handles closing tags
+        if (part === ';/') {
+            return (
+                <span key={i} className="text-neutral-400 dark:text-neutral-500 font-bold">
+                    ;/
+                </span>
+            );
+        }
+
+        // Handles opening and self-closing tags
+        const tagMatch = part.match(/^\/(.*);$/i);
+        if (tagMatch) {
+            const tagName = tagMatch[1];
+            const lowerTag = tagName.toLowerCase();
+
+            let colorClass = "text-emerald-600 dark:text-emerald-400";
+
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'u', 's', 'h'].includes(lowerTag)) {
+                colorClass = "text-yellow-600 dark:text-yellow-500";
+            } else if (['-', '0', 'o'].includes(lowerTag)) {
+                colorClass = "text-blue-600 dark:text-blue-400";
+            } else if (lowerTag === '[]' || lowerTag === '[x]') {
+                colorClass = "text-red-600 dark:text-red-500";
+            }
+
+            return (
+                <span key={i} className={`font-bold ${colorClass}`}>
+                    {part}
+                </span>
+            );
+        }
+
+        return part;
     });
 };
 

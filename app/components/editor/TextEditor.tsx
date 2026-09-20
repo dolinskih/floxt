@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useLayoutEffect, useEffect } from "react";
+import React, { useRef, useState, useLayoutEffect, useEffect, useMemo } from "react";
 import { open } from '@tauri-apps/plugin-shell';
 import { highlightFloxt, parseFloxt } from "../../utils/floxtParser";
 
@@ -23,11 +23,10 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     const [lineHeights, setLineHeights] = useState<number[]>([]);
     const [editorWidth, setEditorWidth] = useState<number>(0);
 
-    const rawLines = (text || "").split('\n');
-    // Using integer pixel values prevents Chromium subpixel rounding desync across scroll
     const exactLineHeight = Math.round(fontSize * 1.5);
+    const rawLines = useMemo(() => (text || "").split('\n'), [text]);
+    const highlightedContent = useMemo(() => highlightFloxt(text), [text]);
 
-    // Compute exact text area width by subtracting padding and scrollbar width
     useEffect(() => {
         if (!textareaRef.current) return;
 
@@ -36,7 +35,6 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             const computed = window.getComputedStyle(textareaRef.current);
             const pl = parseFloat(computed.paddingLeft) || 0;
             const pr = parseFloat(computed.paddingRight) || 0;
-            // clientWidth inherently excludes the vertical scrollbar width
             const textContentWidth = textareaRef.current.clientWidth - pl - pr;
             setEditorWidth(textContentWidth);
         };
@@ -48,22 +46,32 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         return () => observer.disconnect();
     }, [viewMode, lineWrap]);
 
-    // Measure the rendered height of each logical line when wrapping is enabled
+    const charsPerLine = Math.max(1, Math.floor(editorWidth / (fontSize * 0.6)));
+
     useLayoutEffect(() => {
-        if (!lineWrap) {
+        if (!lineWrap || editorWidth <= 0) {
             setLineHeights([]);
             return;
         }
 
-        if (measureContainerRef.current) {
-            const children = Array.from(measureContainerRef.current.children) as HTMLElement[];
-            const heights = children.map((el) => {
-                const h = el.getBoundingClientRect().height;
-                return h > 0 ? h : exactLineHeight;
-            });
-            setLineHeights(heights);
+        if (!measureContainerRef.current) return;
+
+        const children = measureContainerRef.current.children;
+        const total = rawLines.length;
+        const heights: number[] = new Array(total);
+
+        for (let i = 0; i < total; i++) {
+            const line = rawLines[i];
+            if (!line || line.length < charsPerLine) {
+                heights[i] = exactLineHeight;
+            } else {
+                const el = children[i] as HTMLElement;
+                heights[i] = el ? Math.round(el.getBoundingClientRect().height) || exactLineHeight : exactLineHeight;
+            }
         }
-    }, [text, fontSize, lineWrap, editorWidth, exactLineHeight]);
+
+        setLineHeights(heights);
+    }, [text, fontSize, lineWrap, editorWidth, exactLineHeight, charsPerLine, rawLines]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const target = e.target as HTMLTextAreaElement;
@@ -216,7 +224,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
         }
     };
 
-    // Synchronize scrolling between the transparent textarea, highlighting layer, and line numbers
+    // Synchronize scrolling between layers
     const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
         if (preRef.current) {
             preRef.current.scrollTop = e.currentTarget.scrollTop;
@@ -230,7 +238,6 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     const handleReadViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const target = e.target as HTMLElement;
 
-        // Copy button in code snippets
         const copyBtn = target.closest('.floxt-copy-btn') as HTMLButtonElement;
         if (copyBtn) {
             e.preventDefault();
@@ -252,7 +259,6 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
-        // External link handling via Tauri shell plugin or fallback browser tab
         const anchor = target.closest('a');
         if (anchor && anchor.href) {
             e.preventDefault();
@@ -265,7 +271,6 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
-        // Toggle interactive checkboxes directly in rendered view
         if (target.tagName === 'INPUT' && target.classList.contains('floxt-checkbox')) {
             const targetIndex = parseInt(target.getAttribute('data-cb-index') || "-1", 10);
             if (targetIndex > -1) {
@@ -283,7 +288,6 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
             return;
         }
 
-        // Ctrl/Cmd + click: navigate from rendered preview to exact source position in code view
         if ((e.ctrlKey || e.metaKey) && (viewMode === 'read' || viewMode === 'split')) {
             e.preventDefault();
             if (target === e.currentTarget) return;
@@ -329,7 +333,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
     return (
         <div className="w-full flex-1 min-h-[600px] bg-white dark:bg-neutral-900 rounded-lg border border-neutral-300 dark:border-neutral-700 shadow-sm dark:shadow-lg flex flex-col overflow-hidden relative transition-colors duration-200">
 
-            {/* Offscreen measurement clone for wrapped line height calculations */}
+            {/* Offscreen measurement container for wrapped lines */}
             {lineWrap && editorWidth > 0 && (
                 <div
                     ref={measureContainerRef}
@@ -385,12 +389,11 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                                         </div>
                                     ))
                                 )}
-                                {/* Spacer ensures the line numbers container scroll bounds match the editor text */}
                                 <div className="h-6 w-full pointer-events-none select-none" aria-hidden="true" />
                             </div>
                         )}
 
-                        {/* Text editor surface */}
+                        {/* Editor Surface */}
                         <div className="relative flex-1 overflow-hidden bg-transparent">
                             {/* Syntax highlighting layer */}
                             <div
@@ -407,13 +410,12 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                                     }`}
                                 aria-hidden="true"
                             >
-                                {highlightFloxt(text)}
+                                {highlightedContent}
                                 {safeText.endsWith('\n') ? <br /> : null}
-                                {/* Buffer element matching the textarea horizontal scrollbar clearance */}
                                 <div className="h-6 w-full pointer-events-none select-none" aria-hidden="true" />
                             </div>
 
-                            {/* Transparent interactive textarea */}
+                            {/* Transparent editable textarea */}
                             <textarea
                                 key={lineWrap ? "wrap-on" : "wrap-off"}
                                 ref={textareaRef}
@@ -441,7 +443,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                     </div>
                 )}
 
-                {/* Rendered HTML preview */}
+                {/* Read / Preview Pane */}
                 {(viewMode === 'read' || viewMode === 'split') && (
                     <div
                         onClick={handleReadViewClick}
@@ -452,7 +454,7 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                 )}
             </div>
 
-            {/* Document stats footer */}
+            {/* Document Statistics Footer */}
             <div className="flex-none bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-300/50 dark:border-neutral-700/50 px-4 py-1.5 flex justify-end items-center text-xs text-neutral-500 dark:text-neutral-400 font-mono select-none z-20 transition-colors duration-200">
                 <span>{wordsCount} words</span>
                 <span className="mx-2 text-neutral-300 dark:text-neutral-600">•</span>

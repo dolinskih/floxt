@@ -14,7 +14,7 @@
   <Identity
     Name="HubertDoliski.Floxt"
     Publisher="CN=D1900E85-3042-4EA8-A1A4-EAFC23355F45"
-    Version="1.0.0.0" />
+    Version="1.0.1.0" />
 
   <Properties>
     <DisplayName>Floxt</DisplayName>

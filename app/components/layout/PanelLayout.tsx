@@ -125,17 +125,8 @@ export default function PanelLayout({
     // Save active note: updates existing file or triggers native save dialog for new notes
     const handleSave = useCallback(async () => {
         if (filePath) {
-            try {
-                const returnedPath = await fileService.saveDocument(filePath, title, text);
-
-                if (returnedPath !== filePath) {
-                    setFilePath(returnedPath);
-                }
-
-                setSavedText(text);
-                setSavedTitle(title);
-            } catch (error) {
-                console.error("Failed to save:", error);
+            if (onSaveFileFromProject) {
+                onSaveFileFromProject(filePath);
             }
         } else {
             // Use native file dialog when running in Tauri desktop environment
@@ -162,7 +153,7 @@ export default function PanelLayout({
                 return;
             }
         }
-    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath, onNewFileSaved]);
+    }, [text, title, filePath, onSaveFileFromProject, setFilePath, setSavedText, setSavedTitle, setIsFileTracked, onNewFileSaved]);
 
     // Debounced autosave mechanism for saved/tracked files
     useEffect(() => {

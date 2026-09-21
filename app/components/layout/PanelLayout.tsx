@@ -2,18 +2,20 @@
 
 import { Plus, SquareArrowOutUpRight, Terminal, Cog, ChevronUp, ChevronDown, Save, BookOpen, Download, DownloadCloud, Columns, Upload, Library, Trash } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
-import Modal from "./Modal";
-import ExportModal from "./ExportModal";
-import { invoke } from '@tauri-apps/api/core';
-import { save } from '@tauri-apps/plugin-dialog';
-import ImportModal from './ImportModal';
+import Modal from "../modals/Modal";
+import ExportModal from "../modals/ExportModal";
+import { fileService } from '../../services/fileService';
+import ImportModal from '../modals/ImportModal';
+import { useSettings } from '../../contexts/SettingsContext';
 
+// Model definition for files managed within a project folder
 export interface ProjectFile {
     name: string;
     path: string;
     hasUnsavedChanges: boolean;
 }
 
+// Props interface for panel controls, state bindings, and project delegation
 interface PanelLayoutProps {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
@@ -24,20 +26,6 @@ interface PanelLayoutProps {
     hasUnsavedChanges: boolean;
     isFileTracked: boolean;
     setIsFileTracked: React.Dispatch<React.SetStateAction<boolean>>;
-    viewMode: 'code' | 'read' | 'split';
-    setViewMode: React.Dispatch<React.SetStateAction<'code' | 'read' | 'split'>>;
-    fontSize: number;
-    setFontSize: React.Dispatch<React.SetStateAction<number>>;
-    showLineNumbers: boolean;
-    setShowLineNumbers: React.Dispatch<React.SetStateAction<boolean>>;
-    autoSave: boolean;
-    setAutoSave: React.Dispatch<React.SetStateAction<boolean>>;
-    showShortcuts: boolean;
-    setShowShortcuts: React.Dispatch<React.SetStateAction<boolean>>;
-    theme: 'light' | 'dark' | 'system';
-    setTheme: React.Dispatch<React.SetStateAction<'light' | 'dark' | 'system'>>;
-    panelPosition: 'left' | 'right';
-    setPanelPosition: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
     filePath: string | null;
     setFilePath: React.Dispatch<React.SetStateAction<string | null>>;
     projectName?: string | null;
@@ -47,8 +35,10 @@ interface PanelLayoutProps {
     onSaveFileFromProject?: (path: string) => void;
     onNewFileSaved?: (path: string, name: string) => void;
     onDeleteFileFromProject?: (path: string) => void;
+    onOpenGuide?: () => void;
 }
 
+// Reference guide for custom markup and markdown command tags
 const commandsData = [
     { icon: "H1", name: "Heading 1", open: "/h1;", close: ";/" },
     { icon: "H2", name: "Heading 2", open: "/h2;", close: ";/" },
@@ -60,7 +50,7 @@ const commandsData = [
     { icon: "I", name: "Italic", open: "/i;", close: ";/" },
     { icon: "U", name: "Underline", open: "/u;", close: ";/" },
     { icon: "S", name: "Strike-through", open: "/s;", close: ";/" },
-    { icon: "🖍️", name: "Highlight", open: "/h;", close: ";/ "},
+    { icon: "🖍️", name: "Highlight", open: "/h;", close: ";/ " },
     { icon: "•", name: "Unordered list block", open: "/-;", close: ";/" },
     { icon: "1²3", name: "Ordered list block", open: "/0;", close: ";/" },
     { icon: "☐", name: "Unchecked checkbox", open: "/[];", close: "None" },
@@ -72,8 +62,21 @@ const commandsData = [
 ];
 
 export default function PanelLayout({
-    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, viewMode, setViewMode, fontSize, setFontSize, showLineNumbers, setShowLineNumbers, autoSave, setAutoSave, showShortcuts, setShowShortcuts, theme, setTheme, panelPosition, setPanelPosition, filePath, setFilePath, projectName, projectFiles, onOpenProject, onOpenFileFromProject, onSaveFileFromProject, onNewFileSaved, onDeleteFileFromProject
+    text, setText, title, setTitle, setSavedText, setSavedTitle, hasUnsavedChanges, isFileTracked, setIsFileTracked, filePath, setFilePath, projectName, projectFiles, onOpenProject, onOpenFileFromProject, onSaveFileFromProject, onNewFileSaved, onDeleteFileFromProject, onOpenGuide
 }: PanelLayoutProps) {
+    // Consume application settings from context
+    const {
+        viewMode, setViewMode,
+        fontSize, setFontSize,
+        showLineNumbers, setShowLineNumbers,
+        autoSave, setAutoSave,
+        showShortcuts, setShowShortcuts,
+        theme, setTheme,
+        panelPosition, setPanelPosition,
+        lineWrap, setLineWrap
+    } = useSettings();
+
+    // Local UI states: panel collapse, web file handles, and modal visibilities
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [fileHandle, setFileHandle] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,8 +87,10 @@ export default function PanelLayout({
     const [isImportOpen, setIsImportOpen] = useState<boolean>(false);
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
+    // Progressive Web App install prompt reference
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
+    // Capture PWA installation prompt if running in a supported browser
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
@@ -95,6 +100,7 @@ export default function PanelLayout({
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
 
+    // Trigger PWA installation prompt dialog
     const handleInstallClick = async () => {
         if (!deferredPrompt) return;
         const promptEvent = deferredPrompt as any;
@@ -105,6 +111,7 @@ export default function PanelLayout({
         }
     };
 
+    // Reset workspace to a clean, untitled note
     const handleNew = useCallback(() => {
         setText("");
         setTitle("");
@@ -115,15 +122,11 @@ export default function PanelLayout({
         setFilePath(null);
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked, setFilePath]);
 
+    // Save active note: updates existing file or triggers native save dialog for new notes
     const handleSave = useCallback(async () => {
         if (filePath) {
             try {
-                const returnedPath = await invoke<string>('save_document', {
-                    path: filePath,
-                    newName: title,
-                    new_name: title,
-                    content: text
-                });
+                const returnedPath = await fileService.saveDocument(filePath, title, text);
 
                 if (returnedPath !== filePath) {
                     setFilePath(returnedPath);
@@ -135,23 +138,14 @@ export default function PanelLayout({
                 console.error("Failed to save:", error);
             }
         } else {
-            const fileName = title.trim() === "" ? "Untitled" : title;
-
+            // Use native file dialog when running in Tauri desktop environment
             if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
                 try {
-                    const newPath = await save({
-                        title: 'Save New Note',
-                        defaultPath: `${fileName}.floxt`,
-                        filters: [{ name: 'Floxt File', extensions: ['floxt'] }]
-                    });
+                    const newPath = await fileService.saveNewNoteDialog(title);
 
                     if (newPath) {
-                        const returnedPath = await invoke<string>('save_document', {
-                            path: newPath,
-                            newName: fileName,
-                            new_name: fileName,
-                            content: text
-                        });
+                        const fileName = title.trim() === "" ? "" : title;
+                        const returnedPath = await fileService.saveDocument(newPath, fileName, text);
 
                         setFilePath(returnedPath);
                         setSavedText(text);
@@ -168,9 +162,9 @@ export default function PanelLayout({
                 return;
             }
         }
+    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath, onNewFileSaved]);
 
-    }, [text, title, fileHandle, filePath, setSavedText, setSavedTitle, setIsFileTracked, setTitle, setFilePath]);
-
+    // Debounced autosave mechanism for saved/tracked files
     useEffect(() => {
         if (autoSave && isFileTracked && (fileHandle || filePath) && hasUnsavedChanges) {
             const timeoutId = setTimeout(() => {
@@ -180,6 +174,7 @@ export default function PanelLayout({
         }
     }, [text, autoSave, isFileTracked, fileHandle, filePath, hasUnsavedChanges, handleSave]);
 
+    // Open file using File System Access API with fallback to standard input
     const handleOpenClick = useCallback(async () => {
         try {
             if ('showOpenFilePicker' in window) {
@@ -204,6 +199,7 @@ export default function PanelLayout({
         fileInputRef.current?.click();
     }, [setText, setTitle, setSavedText, setSavedTitle, setIsFileTracked]);
 
+    // Copy command syntax to clipboard and display feedback animation
     const handleCopy = (textToCopy: string, id: string) => {
         if (textToCopy === 'None') return;
         navigator.clipboard.writeText(textToCopy);
@@ -211,8 +207,10 @@ export default function PanelLayout({
         setTimeout(() => setCopiedCommand(null), 2000);
     };
 
+    // Global keyboard shortcut listeners for file operations, view switches, and panels
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Save and Open shortcuts
             if (e.ctrlKey || e.metaKey) {
                 if (e.key.toLowerCase() === 's') {
                     e.preventDefault();
@@ -225,8 +223,13 @@ export default function PanelLayout({
                 }
             }
 
+            // Alt shortcuts for navigation and toggles
             if (e.altKey) {
-                if (e.key.toLowerCase() === 'n') {
+                if (e.key.toLowerCase() === 't') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsOpen(prev => !prev);
+                } else if (e.key.toLowerCase() === 'n') {
                     e.preventDefault();
                     e.stopPropagation();
                     handleNew();
@@ -270,6 +273,7 @@ export default function PanelLayout({
         return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
     }, [handleNew, handleSave, handleOpenClick, setViewMode, onOpenProject]);
 
+    // Fallback file input handler for opening notes in browsers without picker support
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -291,6 +295,7 @@ export default function PanelLayout({
         e.target.value = "";
     };
 
+    // Load imported document contents into the editor
     const handleImport = useCallback((importedTitle: string, importedContent: string) => {
         setText(importedContent);
         setTitle(importedTitle);
@@ -304,26 +309,28 @@ export default function PanelLayout({
 
     return (
         <div className="sticky top-4 self-start flex flex-col gap-2 w-fit h-fit items-center z-50">
+            {/* Project explorer: lists documents within the active project directory */}
             {projectName && isOpen && (
-                <section className="p-3 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg w-full flex flex-col gap-2 shadow-sm">
-                    <h3 className="font-bold text-neutral-800 dark:text-white border-b border-neutral-200 dark:border-neutral-800 pb-2 mb-1 truncate" title={projectName}>
+                <section className="p-3 bg-white/60 dark:bg-neutral-900/60 border border-neutral-300 dark:border-neutral-700 rounded-lg w-full flex flex-col gap-2 shadow-sm backdrop-blur-md">
+                    <h3 className="font-bold text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-800 pb-2 mb-1 truncate" title={projectName}>
                         {projectName}
                     </h3>
                     <div className="flex flex-col gap-1 max-h-[30vh] overflow-y-auto pr-1">
                         {projectFiles?.map((file, idx) => (
-                            <div key={idx} className="flex items-center justify-between group text-sm p-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 rounded transition-colors">
+                            <div key={idx} className="flex items-center justify-between group text-sm p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 rounded transition-colors">
                                 <div className="flex items-center gap-2 overflow-hidden pr-2">
+                                    {/* Unsaved changes indicator dot */}
                                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${file.hasUnsavedChanges ? 'bg-yellow-500' : 'bg-transparent'}`} />
                                     <span className="truncate text-neutral-700 dark:text-neutral-300 font-medium">{file.name}</span>
                                 </div>
                                 <div className="flex gap-1.5">
-                                    <button onClick={() => onOpenFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-600 dark:text-neutral-300 transition-colors shadow-sm">
+                                    <button onClick={() => onOpenFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm">
                                         Open <SquareArrowOutUpRight size={10} strokeWidth={3} />
                                     </button>
-                                    <button onClick={() => onSaveFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-600 dark:text-neutral-300 transition-colors shadow-sm">
+                                    <button onClick={() => onSaveFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm">
                                         Save <Save size={10} strokeWidth={3} />
                                     </button>
-                                    <button onClick={() => onDeleteFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-red-200 dark:border-red-900/50 bg-white dark:bg-neutral-800 hover:bg-red-50 dark:hover:bg-red-950/50 rounded text-[10px] font-bold text-red-600 dark:text-red-400 transition-colors shadow-sm">
+                                    <button onClick={() => onDeleteFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-950/50 rounded text-[10px] font-bold text-red-600 dark:text-red-400 transition-colors shadow-sm">
                                         <Trash size={10} strokeWidth={3} />
                                     </button>
                                 </div>
@@ -333,82 +340,93 @@ export default function PanelLayout({
                 </section>
             )}
 
-            <section className={`p-3 h-fit bg-white dark:bg-neutral-900 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm`}>
+            {/* Main Action Sidebar */}
+            <section className={`p-3 h-fit bg-white/60 dark:bg-neutral-900/60 transition-all duration-150 ease-in-out w-full ${isOpen ? 'pr-5' : ''} border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm backdrop-blur-md`}>
 
+                {/* Hidden file input element for browser file reading */}
                 <input type="file" accept=".floxt" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />
 
                 {isOpen && (
                     <div className={`overflow-hidden transition-all duration-150 ease-in-out flex flex-col ${isOpen ? 'max-h-[600px] max-w-[300px] opacity-100' : 'max-h-0 max-w-0 opacity-0'}`}>
 
+                        {/* Create new document button */}
                         <button onClick={handleNew} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Plus size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Plus size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">New note</p>
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">New note</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+N</span>}
                             </div>
                         </button>
 
+                        {/* Save active document button */}
                         <button onClick={handleSave} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Save size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Save size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Save note</p>
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Save note</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Ctrl+S</span>}
                             </div>
                         </button>
 
+                        {/* Open single note button */}
                         <button onClick={handleOpenClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <SquareArrowOutUpRight size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <SquareArrowOutUpRight size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Open note</p>
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Open note</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Ctrl+O</span>}
                             </div>
                         </button>
 
+                        {/* Open folder as project button */}
                         <button onClick={onOpenProject} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Library size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Library size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Open project</p>
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Open project</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+P</span>}
                             </div>
                         </button>
 
+                        {/* Open file import dialog */}
                         <button onClick={() => setIsImportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Upload size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Upload size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Import</p>
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Import</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+I</span>}
                             </div>
                         </button>
 
+                        {/* Open file export modal */}
                         <button onClick={() => setIsExportOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Download size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Download size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Export</p>
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Export</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+E</span>}
                             </div>
                         </button>
 
+                        {/* Open formatting commands cheat-sheet */}
                         <button onClick={() => setIsCommandsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Terminal size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Terminal size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Commands</p>
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Commands</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+C</span>}
                             </div>
                         </button>
 
+                        {/* Open editor preferences modal */}
                         <button onClick={() => setIsSettingsOpen(true)} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer group"}>
-                            <Cog size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <Cog size={28} className="mt-2 mb-2 p-0.5 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                             <div className="flex flex-col items-start m-2 mr-5">
-                                <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Settings</p>
+                                <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Settings</p>
                                 {showShortcuts && <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">Alt+S</span>}
                             </div>
                         </button>
 
+                        {/* Conditionally render PWA installation button */}
                         {deferredPrompt && (
-                            <button onClick={handleInstallClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer mt-2 pt-2 border-t border-neutral-300 dark:border-neutral-800 group"}>
-                                <DownloadCloud size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                            <button onClick={handleInstallClick} className={"flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-opacity delay-100 ease-in-out cursor-pointer mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-800 group"}>
+                                <DownloadCloud size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors" />
                                 <div className="flex flex-col items-start m-2 mr-5">
-                                    <p className="whitespace-nowrap text-neutral-800 dark:text-white font-medium">Install</p>
+                                    <p className="whitespace-nowrap text-neutral-900 dark:text-white font-medium">Install</p>
                                     <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono whitespace-nowrap">Work offline with faster speed</span>
                                 </div>
                             </button>
@@ -416,127 +434,181 @@ export default function PanelLayout({
                     </div>
                 )}
 
+                {/* Sidebar expand / collapse toggle button */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-all duration-150 ease-in-out cursor-pointer ${isOpen ? 'mt-5' : 'w-full justify-center'}`}>
-                    {isOpen ? <ChevronUp size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white" /> : <ChevronDown size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white" />}
+                    title={showShortcuts ? "Toggle panel (Alt+T)" : "Toggle panel"}
+                    className={`flex items-center active:scale-95 active:opacity-75 hover:opacity-75 transition-all duration-150 ease-in-out cursor-pointer ${isOpen ? 'mt-5 gap-2' : 'w-full justify-center'
+                        }`}
+                >
+                    {isOpen ? (
+                        <div className="flex items-center gap-2">
+                            <ChevronUp size={28} className="text-neutral-800 dark:text-white" />
+                            {showShortcuts && (
+                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono select-none">
+                                    Alt+T
+                                </span>
+                            )}
+                        </div>
+                    ) : (
+                        <ChevronDown size={28} className="mt-2 mb-2 text-neutral-800 dark:text-white" />
+                    )}
                 </button>
             </section>
 
-            <div className={`flex gap-2 p-1.5 transition-all duration-150 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl ${isOpen ? 'w-full flex-row' : 'w-fit flex-col'}`}>
+            {/* View Switcher Controls: Code, Split, or Read modes */}
+            <div className={`flex gap-2 p-1.5 transition-all duration-150 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl shadow-sm ${isOpen ? 'w-full flex-row' : 'w-fit flex-col'}`}>
+                {/* Code-only view */}
                 <button
                     onClick={() => setViewMode('code')}
                     title="Alt+1"
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'code' ? 'border border-neutral-400 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border border-transparent'}`}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'code' ? 'border border-neutral-300 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400 border border-transparent'}`}
                 >
                     <Terminal size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Code view</span>
-                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+1</span>}
+                            {showShortcuts && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono">Alt+1</span>}
                         </div>
                     )}
                 </button>
 
+                {/* Split view (Editor + Markdown Preview) */}
                 <button
                     onClick={() => setViewMode('split')}
                     title="Alt+2"
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'split' ? 'border border-neutral-400 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border border-transparent'}`}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'split' ? 'border border-neutral-300 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400 border border-transparent'}`}
                 >
                     <Columns size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Split view</span>
-                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+2</span>}
+                            {showShortcuts && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono">Alt+2</span>}
                         </div>
                     )}
                 </button>
 
+                {/* Read-only rendered view */}
                 <button
                     onClick={() => setViewMode('read')}
                     title="Alt+3"
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-400 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border border-transparent'}`}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer flex-1 ${viewMode === 'read' ? 'border border-neutral-300 dark:border-neutral-500 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400 border border-transparent'}`}
                 >
                     <BookOpen size={isOpen ? 18 : 22} />
                     {isOpen && (
                         <div className="flex flex-col items-start">
                             <span className="text-sm font-mono whitespace-nowrap leading-tight">Read view</span>
-                            {showShortcuts && <span className="text-[9px] text-neutral-500 font-mono">Alt+3</span>}
+                            {showShortcuts && <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono">Alt+3</span>}
                         </div>
                     )}
                 </button>
             </div>
 
+            {/* Document save state badge indicator */}
             {(hasUnsavedChanges || isFileTracked) && (
-                <div className="relative w-full h-4 mt-1">
-                    <div className={`absolute top-0 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-mono transition-colors duration-150 ${hasUnsavedChanges ? 'text-yellow-600 dark:text-yellow-500' : 'text-neutral-500'}`}>
-                        {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
-                    </div>
+                <div className="w-full flex justify-center items-center py-1 select-none">
+                    {isOpen ? (
+                        <span
+                            className={`text-xs font-mono transition-colors duration-150 text-center truncate ${hasUnsavedChanges ? 'text-yellow-500' : 'text-neutral-500'
+                                }`}
+                        >
+                            {hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
+                        </span>
+                    ) : (
+                        <span
+                            title={hasUnsavedChanges ? "Unsaved changes" : "Saved changes"}
+                            className={`w-2 h-2 rounded-full transition-colors duration-150 ${hasUnsavedChanges ? 'bg-yellow-500' : 'bg-neutral-500'
+                                }`}
+                        />
+                    )}
                 </div>
             )}
 
+            {/* Import and Export Dialogs */}
             <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleImport} />
             <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} text={text} title={title} />
 
+            {/* Command syntax reference modal */}
             <Modal isOpen={isCommandsOpen} onClose={() => setIsCommandsOpen(false)} title="Commands">
                 <div className="max-h-[60vh] overflow-y-auto pr-2">
                     <div className="flex flex-col gap-1 w-full">
-                        <div className="grid grid-cols-[40px_1fr_100px_60px] gap-4 pb-2 border-b border-neutral-300 dark:border-neutral-700 text-neutral-500 font-bold mb-2 sticky top-0 bg-white dark:bg-neutral-900 pt-1">
+                        <div className="grid grid-cols-[40px_1fr_100px_60px] gap-4 pb-2 border-b border-neutral-200 dark:border-neutral-700 text-neutral-500 font-bold mb-2 sticky top-0 bg-white dark:bg-neutral-900 pt-1">
                             <span className="text-center"></span>
                             <span>Name</span>
                             <span className="text-center">Open</span>
                             <span className="text-center">Close</span>
                         </div>
                         {commandsData.map((cmd, idx) => (
-                            <div key={idx} className="grid grid-cols-[40px_1fr_100px_60px] gap-4 items-center py-2 border-b border-neutral-200 dark:border-neutral-800/50 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 px-1 rounded transition-colors group">
-                                <span className="text-neutral-900 dark:text-gray-200 font-bold flex justify-center text-base">
+                            <div key={idx} className="grid grid-cols-[40px_1fr_100px_60px] gap-4 items-center py-2 border-b border-neutral-200/50 dark:border-neutral-800/50 last:border-0 hover:bg-neutral-100 dark:hover:bg-neutral-800/30 px-1 rounded transition-colors group">
+                                <span className="text-neutral-800 dark:text-gray-200 font-bold flex justify-center text-base">
                                     {cmd.icon === 'S' ? <s className="decoration-2">{cmd.icon}</s> : cmd.icon === 'U' ? <u className="underline-offset-2 decoration-2">{cmd.icon}</u> : cmd.icon === 'I' ? <i className="font-serif">{cmd.icon}</i> : cmd.icon}
                                 </span>
                                 <span className="text-neutral-700 dark:text-gray-300 truncate">{cmd.name}</span>
-                                <code onClick={() => handleCopy(cmd.open, `${idx}-open`)} className={`px-1 py-0.5 rounded text-center border text-xs cursor-pointer transition-colors ${copiedCommand === `${idx}-open` ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 border-emerald-500' : 'text-yellow-600 dark:text-yellow-500 bg-neutral-100 dark:bg-neutral-950 border-neutral-300 dark:border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-50 dark:hover:bg-neutral-900'}`}>{cmd.open}</code>
-                                <code onClick={() => handleCopy(cmd.close, `${idx}-close`)} className={`px-1 py-0.5 rounded text-center border text-xs ${cmd.close === 'None' ? 'text-neutral-400 dark:text-neutral-500 bg-transparent border-transparent' : `cursor-pointer transition-colors ${copiedCommand === `${idx}-close` ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 border-emerald-500' : 'text-yellow-600 dark:text-yellow-500 bg-neutral-100 dark:bg-neutral-950 border-neutral-300 dark:border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-50 dark:hover:bg-neutral-900'}`}`}>{cmd.close}</code>
+                                <code onClick={() => handleCopy(cmd.open, `${idx}-open`)} className={`px-1 py-0.5 rounded text-center border text-xs cursor-pointer transition-colors ${copiedCommand === `${idx}-open` ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-500' : 'text-yellow-600 dark:text-yellow-500 bg-neutral-100 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-200 dark:hover:bg-neutral-900'}`}>{cmd.open}</code>
+                                <code onClick={() => handleCopy(cmd.close, `${idx}-close`)} className={`px-1 py-0.5 rounded text-center border text-xs ${cmd.close === 'None' ? 'text-neutral-400 dark:text-neutral-500 bg-transparent border-transparent' : `cursor-pointer transition-colors ${copiedCommand === `${idx}-close` ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-500' : 'text-yellow-600 dark:text-yellow-500 bg-neutral-100 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-200 dark:hover:bg-neutral-900'}`}`}>{cmd.close}</code>
                             </div>
                         ))}
                     </div>
                 </div>
             </Modal>
 
+            {/* Application Settings Modal */}
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Settings">
                 <div className="flex flex-col gap-6 p-2">
+                    {/* Font size adjustment */}
                     <div className="flex items-center justify-between">
-                        <span className="text-neutral-900 dark:text-gray-200">Editor Font Size</span>
+                        <span className="text-neutral-800 dark:text-gray-200">Editor Font Size</span>
                         <div className="flex items-center gap-4 bg-neutral-100 dark:bg-neutral-950 px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-800">
-                            <button onClick={() => setFontSize(f => Math.max(10, f - 1))} className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white cursor-pointer active:scale-95">-</button>
+                            <button onClick={() => setFontSize(f => Math.max(10, f - 1))} className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer active:scale-95">-</button>
                             <span className="text-yellow-600 dark:text-yellow-500 font-mono w-6 text-center">{fontSize}</span>
-                            <button onClick={() => setFontSize(f => Math.min(24, f + 1))} className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white cursor-pointer active:scale-95">+</button>
+                            <button onClick={() => setFontSize(f => Math.min(24, f + 1))} className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer active:scale-95">+</button>
                         </div>
                     </div>
+
+                    {/* Toggle line numbers */}
                     <div className="flex items-center justify-between">
-                        <span className="text-neutral-900 dark:text-gray-200">Show Line Numbers</span>
+                        <span className="text-neutral-800 dark:text-gray-200">Show Line Numbers</span>
                         <button onClick={() => setShowLineNumbers(!showLineNumbers)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showLineNumbers ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showLineNumbers ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Toggle line wrapping */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-neutral-900 dark:text-gray-200">Auto Save</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Wrap Lines</span>
+                            <span className="text-[10px] text-neutral-500">Wrap text to avoid horizontal scrolling</span>
+                        </div>
+                        <button onClick={() => setLineWrap(!lineWrap)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${lineWrap ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${lineWrap ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </button>
+                    </div>
+
+                    {/* Toggle automatic save */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-neutral-800 dark:text-gray-200">Auto Save</span>
                             <span className="text-[10px] text-neutral-500">Only works for opened files</span>
                         </div>
                         <button onClick={() => setAutoSave(!autoSave)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${autoSave ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${autoSave ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Toggle keyboard shortcuts display in UI */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-neutral-900 dark:text-gray-200">Show Keyboard Shortcuts</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Show Keyboard Shortcuts</span>
                         </div>
                         <button onClick={() => setShowShortcuts(!showShortcuts)} className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer ${showShortcuts ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showShortcuts ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Toggle sidebar placement between left and right */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-neutral-900 dark:text-gray-200">Pin Panel to Right</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Pin Panel to Right</span>
                         </div>
                         <button
                             onClick={() => setPanelPosition(prev => prev === 'left' ? 'right' : 'left')}
@@ -545,9 +617,11 @@ export default function PanelLayout({
                             <div className={`w-4 h-4 rounded-full bg-white transition-transform ${panelPosition === 'right' ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                     </div>
+
+                    {/* Application theme selector */}
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-neutral-900 dark:text-gray-200">Theme</span>
+                            <span className="text-neutral-800 dark:text-gray-200">Theme</span>
                         </div>
                         <select
                             value={theme}
@@ -559,8 +633,25 @@ export default function PanelLayout({
                             <option value="light">Light Mode</option>
                         </select>
                     </div>
+
+                    {/* Button to manually relaunch the introductory walkthrough */}
+                    <div className="flex items-center justify-between pt-2 border-t border-neutral-200 dark:border-neutral-800">
+                        <div className="flex flex-col">
+                            <span className="text-neutral-800 dark:text-gray-200 text-sm">Welcome Guide</span>
+                            <span className="text-[10px] text-neutral-500">Replay the introductory walkthrough</span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setIsSettingsOpen(false);
+                                onOpenGuide?.();
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded border border-neutral-300 dark:border-neutral-700 transition-colors"
+                        >
+                            Open Guide
+                        </button>
+                    </div>
                 </div>
             </Modal>
         </div>
-    )
+    );
 }

@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Floxt",
-  "version": "0.4.0",
-  "identifier": "com.hdolinski.floxt",
+  "version": "1.0.0",
+  "identifier": "HubertDoliski.Floxt",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -16,7 +16,9 @@
         "width": 1000,
         "height": 800,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": true
       }
     ],
     "security": {
@@ -34,14 +36,20 @@
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/icon.ico",
+      "icons/Square150x150Logo.png",
+      "icons/Square44x44Logo.png",
+      "icons/StoreLogo.png"
     ],
     "windows": {
       "nsis": {
         "installerIcon": "icons/icon.ico",
         "headerImage": "installer/header_floxt.bmp",
         "sidebarImage": "installer/sidebar_floxt.bmp"
-      }
+      },
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
     },
     "fileAssociations": [
       {

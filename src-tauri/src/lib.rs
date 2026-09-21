@@ -1,5 +1,6 @@
 use serde::Serialize;
 use std::fs;
+use tauri::Manager;
 
 #[derive(Serialize)]
 pub struct ProjectFileInfo {
@@ -132,6 +133,41 @@ fn delete_document(path: String) -> Result<(), String> {
     std::fs::remove_file(path).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn update_window_theme(app: tauri::AppHandle, is_dark: bool) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window_vibrancy::apply_mica(&window, Some(is_dark));
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn get_package_family_name() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        use windows::ApplicationModel::Package;
+        match Package::Current() {
+            Ok(package) => {
+                match package.Id() {
+                    Ok(id) => match id.FamilyName() {
+                        Ok(name) => name.to_string(),
+                        Err(_) => "Error retrieving Family Name".to_string(),
+                    },
+                    Err(_) => "Error retrieving Package ID".to_string(),
+                }
+            }
+            Err(_) => "No package identity".to_string(),
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        "Not running on Windows".to_string()
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -142,7 +178,9 @@ pub fn run() {
             save_document,
             read_project_dir,
             read_document,
-            delete_document
+            delete_document,
+            update_window_theme,
+            get_package_family_name
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {
@@ -152,6 +190,14 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            #[cfg(target_os = "windows")]
+            {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window_vibrancy::apply_mica(&window, Some(true));
+                }
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())

@@ -1,9 +1,11 @@
-"use client";
+"use client"; // Flags the component to run entirely in the browser.
 
 import { useRef, useState } from 'react';
 import Modal from './Modal';
 import { FileUp } from 'lucide-react';
+import { convertMarkdownToFloxt } from '../../utils/floxtParser';
 
+// Describes the structure for state control and the callback firing upon import completion.
 interface ImportModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -11,71 +13,10 @@ interface ImportModalProps {
 }
 
 export default function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null); // References the hidden file input element.
     const [isDragging, setIsDragging] = useState(false);
 
-    const convertMarkdownToFloxt = (md: string): string => {
-        let floxt = md;
-
-        // 1. Multi-line blocks (Code)
-        floxt = floxt.replace(/```([\s\S]*?)```/g, (match, p1) => {
-            return `/code;\n${p1.trim()}\n;/`;
-        });
-
-        // 2. Inline styling
-        floxt = floxt.replace(/\*\*(.*?)\*\*/g, '/b;$1;/');
-        floxt = floxt.replace(/__(.*?)__/g, '/b;$1;/');
-
-        // Italic: *text* or _text_
-        floxt = floxt.replace(/\*(.*?)\*/g, '/i;$1;/');
-        floxt = floxt.replace(/_(.*?)_/g, '/i;$1;/');
-
-        // Strikethrough: ~~text~~
-        floxt = floxt.replace(/~~(.*?)~~/g, '/s;$1;/');
-
-        // Highlight
-        floxt = floxt.replace(/==(.*?)==/g, '/h;$1;/');
-        floxt = floxt.replace(/<mark>(.*?)<\/mark>/gi, '/h;$1;/');
-
-        // 3. Media and Links
-        // Images: ![alt](url) -> /img;url;alt;/
-        floxt = floxt.replace(/!\[(.*?)\]\((.*?)\)/g, '/img;$2;$1;/');
-
-        // Links: [text](url) -> /link;url;text;/
-        floxt = floxt.replace(/\[(.*?)\]\((.*?)\)/g, '/link;$2;$1;/');
-
-        // 4. Line-by-line block elements (Headings, Lists, Checkboxes)
-        const lines = floxt.split('\n');
-        const processedLines = lines.map(line => {
-            // Headings (# through ######)
-            const hMatch = line.match(/^(#{1,6})\s+(.*)$/);
-            if (hMatch) {
-                const level = hMatch[1].length;
-                return `/h${level};${hMatch[2]};/`;
-            }
-
-            // Checkboxes (Unchecked: - [ ] text)
-            const uncheckedMatch = line.match(/^[\*\-]\s+\[\s\]\s+(.*)$/);
-            if (uncheckedMatch) return `/[];${uncheckedMatch[1]}`;
-
-            // Checkboxes (Checked: - [x] text)
-            const checkedMatch = line.match(/^[\*\-]\s+\[[xX]\]\s+(.*)$/);
-            if (checkedMatch) return `/[x];${checkedMatch[1]}`;
-
-            // Unordered Lists (- text or * text)
-            const ulMatch = line.match(/^[\*\-]\s+(.*)$/);
-            if (ulMatch) return `/-;${ulMatch[1]};/`;
-
-            // Ordered Lists (1. text)
-            const olMatch = line.match(/^\d+\.\s+(.*)$/);
-            if (olMatch) return `/0;${olMatch[1]};/`;
-
-            return line;
-        });
-
-        return processedLines.join('\n');
-    };
-
+    // Reads the provided file, validates its extension, and converts it if necessary before importing.
     const processFile = (file: File) => {
         const validExtensions = ['.md', '.txt', '.floxt'];
         const isValid = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
@@ -103,12 +44,14 @@ export default function ImportModal({ isOpen, onClose, onImport }: ImportModalPr
         reader.readAsText(file);
     };
 
+    // Responds to manual file selection via the traditional file browser.
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) processFile(file);
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
+    // Drag-and-drop state handlers.
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(true);
@@ -119,6 +62,7 @@ export default function ImportModal({ isOpen, onClose, onImport }: ImportModalPr
         setIsDragging(false);
     };
 
+    // Initiates the file processing sequence when a file is physically dropped onto the dropzone.
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(false);
@@ -133,6 +77,7 @@ export default function ImportModal({ isOpen, onClose, onImport }: ImportModalPr
                     Select a file to import into a new note. Markdown files (.md) will be automatically converted to Floxt formatting.
                 </p>
 
+                {/* The drag-and-drop interaction zone. */}
                 <div
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -150,6 +95,7 @@ export default function ImportModal({ isOpen, onClose, onImport }: ImportModalPr
                     <span className="text-xs text-neutral-500 mt-1">.md, .txt, .floxt</span>
                 </div>
 
+                {/* The hidden input triggered by clicking the dropzone. */}
                 <input
                     type="file"
                     accept=".md,.txt,.floxt"

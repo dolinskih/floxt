@@ -1,380 +1,124 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import PanelLayout from "./PanelLayout";
-import TextEditor from "./TextEditor";
-import NoteTitle from "./NoteTitle";
-import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
-import ConfirmModal from "./ConfirmModal";
+import { useEffect, useState, useRef } from "react";
+import PanelLayout from "./components/layout/PanelLayout";
+import TextEditor from "./components/editor/TextEditor";
+import NoteTitle from "./components/editor/NoteTitle";
+import ConfirmModal from "./components/modals/ConfirmModal";
+import WelcomeGuideModal from "./components/modals/WelcomeGuideModal";
+import { useSettings } from "./contexts/SettingsContext";
+import { useProjectManager } from "./hooks/useProjectManager";
+import ExitWarningModal from "./components/modals/ExitWarningModal";
 
 export default function Home() {
-    const [text, setText] = useState<string>("");
-    const [title, setTitle] = useState<string>("");
-    const [filePath, setFilePath] = useState<string | null>(null);
-    const [savedText, setSavedText] = useState<string>("");
-    const [savedTitle, setSavedTitle] = useState<string>("");
+    // Global editor and UI layout preferences retrieved from context
+    const { panelPosition, viewMode, setViewMode, fontSize, showLineNumbers, lineWrap } = useSettings();
 
-    const [projectName, setProjectName] = useState<string | null>(null);
-    const [projectPath, setProjectPath] = useState<string | null>(null);
-    const [projectFiles, setProjectFiles] = useState<{ name: string, path: string }[]>([]);
-    const [activeFiles, setActiveFiles] = useState<{ name: string, path: string }[]>([]);
-    const [unsavedFilesTracker, setUnsavedFilesTracker] = useState<Record<string, boolean>>({});
-    const [fileBuffers, setFileBuffers] = useState<Record<string, { text: string, title: string, savedText: string, savedTitle: string }>>({});
+    // Modal visibility states for the welcome guide and exit interception dialog
+    const [isWelcomeGuideOpen, setIsWelcomeGuideOpen] = useState(false);
+    const [isExitWarningOpen, setIsExitWarningOpen] = useState(false);
 
-    const [isFileTracked, setIsFileTracked] = useState<boolean>(false);
-    const [fileToDelete, setFileToDelete] = useState<string | null>(null);
-    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState<boolean>(false);
-    const [viewMode, setViewMode] = useState<'code' | 'read' | 'split'>('code');
+    // Main project and document management state/handlers
+    const {
+        text, setText, title, setTitle,
+        filePath, setFilePath,
+        savedText, setSavedText, savedTitle, setSavedTitle,
+        projectName, projectFiles, activeFiles,
+        unsavedFilesTracker,
+        isFileTracked, setIsFileTracked,
+        fileToDelete, setFileToDelete,
+        isConfirmDeleteOpen, setIsConfirmDeleteOpen,
+        hasUnsavedChanges,
+        handleOpenFileFromProject, handleCloseTab, handleOpenProject,
+        handleSaveFileFromProject, handleNewFileSaved,
+        handleDeleteFileFromProject, executeDelete
+    } = useProjectManager();
 
-    const [fontSize, setFontSize] = useState<number>(14);
-    const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
-    const [autoSave, setAutoSave] = useState<boolean>(false);
-    const [showShortcuts, setShowShortcuts] = useState<boolean>(true);
+    // Check if the current note or any opened project document has unsaved modifications
+    const hasAnyUnsavedChanges = hasUnsavedChanges || Object.values(unsavedFilesTracker).some(Boolean);
+    // Keep a mutable ref synchronized with the unsaved state for the native Tauri close callback
+    const hasUnsavedRef = useRef(hasAnyUnsavedChanges);
+    hasUnsavedRef.current = hasAnyUnsavedChanges;
 
-    const [panelPosition, setPanelPosition] = useState<'left' | 'right'>('left');
-
-    const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
-    const [isLoaded, setIsLoaded] = useState<boolean>(false);
-
-    const handleOpenFileFromProject = async (targetPath: string) => {
-        try {
-            if (filePath && filePath !== targetPath) {
-                setFileBuffers(prev => ({
-                    ...prev,
-                    [filePath]: { text, title, savedText, savedTitle }
-                }));
-            }
-
-            if (fileBuffers[targetPath]) {
-                const buffer = fileBuffers[targetPath];
-                setText(buffer.text);
-                setTitle(buffer.title);
-                setSavedText(buffer.savedText);
-                setSavedTitle(buffer.savedTitle);
-                setFilePath(targetPath);
-                setIsFileTracked(true);
-                return;
-            }
-
-            const fileContent = await invoke<string>('read_document', { path: targetPath });
-            const fileName = targetPath.split(/[\\/]/).pop()?.replace(/\.floxt$/i, '') || 'Unknown';
-
-            setText(fileContent);
-            setTitle(fileName);
-            setSavedText(fileContent);
-            setSavedTitle(fileName);
-            setFilePath(targetPath);
-            setIsFileTracked(true);
-
-            setFileBuffers(prev => ({
-                ...prev,
-                [targetPath]: { text: fileContent, title: fileName, savedText: fileContent, savedTitle: fileName }
-            }));
-
-            if (!activeFiles.find(f => f.path === targetPath)) {
-                setActiveFiles(prev => [...prev, { name: fileName, path: targetPath }]);
-            }
-        } catch (error) {
-            console.error("Failed to read file:", error);
-        }
-    };
-
-    const handleCloseTab = (targetPath: string) => {
-        setActiveFiles(prev => prev.filter(f => f.path !== targetPath));
-
-        setFileBuffers(prev => {
-            const newBuffers = { ...prev };
-            delete newBuffers[targetPath];
-            return newBuffers;
-        });
-        setUnsavedFilesTracker(prev => {
-            const newTracker = { ...prev };
-            delete newTracker[targetPath];
-            return newTracker;
-        });
-
-        if (filePath === targetPath) {
-            setText("");
-            setTitle("");
-            setSavedText("");
-            setSavedTitle("");
-            setFilePath(null);
-            setIsFileTracked(false);
-        }
-    };
-
-    const handleOpenProject = async () => {
-        try {
-            const selectedDir = await open({
-                directory: true,
-                multiple: false,
-                title: 'Open Floxt Project Folder'
-            });
-
-            if (selectedDir) {
-                const folderName = (selectedDir as string).split(/[\\/]/).pop() || 'Project';
-                setProjectName(folderName);
-                setProjectPath(selectedDir as string);
-
-                const files = await invoke<{ name: string, path: string }[]>('read_project_dir', { dirPath: selectedDir });
-                setProjectFiles(files);
-
-                setActiveFiles([]);
-                setFileBuffers({});
-                setUnsavedFilesTracker({});
-
-                setText("");
-                setTitle("");
-                setSavedText("");
-                setSavedTitle("");
-                setFilePath(null);
-                setIsFileTracked(false);
-            }
-        } catch (error) {
-            console.error("Failed to open project:", error);
-        }
-    };
-
-    const handleSaveFileFromProject = async (targetPath: string) => {
-        try {
-            let contentToSave = "";
-            let titleToSave = "";
-
-            if (targetPath === filePath) {
-                contentToSave = text;
-                titleToSave = title;
-            } else if (fileBuffers[targetPath]) {
-                contentToSave = fileBuffers[targetPath].text;
-                titleToSave = fileBuffers[targetPath].title;
-            } else {
-                return;
-            }
-
-            const returnedPath = await invoke<string>('save_document', {
-                path: targetPath,
-                newName: titleToSave,
-                new_name: titleToSave,
-                content: contentToSave
-            });
-
-            if (returnedPath !== targetPath) {
-                if (targetPath === filePath) setFilePath(returnedPath);
-
-                setActiveFiles(prev => prev.map(f =>
-                    f.path === targetPath ? { ...f, name: titleToSave, path: returnedPath } : f
-                ));
-
-                setFileBuffers(prev => {
-                    const newBuffers = { ...prev };
-                    if (newBuffers[targetPath]) {
-                        newBuffers[returnedPath] = {
-                            ...newBuffers[targetPath],
-                            title: titleToSave,
-                            savedText: contentToSave,
-                            savedTitle: titleToSave
-                        };
-                        delete newBuffers[targetPath];
-                    }
-                    return newBuffers;
-                });
-
-                setProjectFiles(prev => {
-                    let updated = prev.map(f => f.path === targetPath ? { name: titleToSave, path: returnedPath } : f);
-                    updated.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-                    return updated;
-                });
-
-                setUnsavedFilesTracker(prev => {
-                    const newTracker = { ...prev };
-                    newTracker[returnedPath] = false;
-                    delete newTracker[targetPath];
-                    return newTracker;
-                });
-
-            } else {
-                if (targetPath === filePath) {
-                    setSavedText(contentToSave);
-                    setSavedTitle(titleToSave);
-                } else {
-                    setFileBuffers(prev => ({
-                        ...prev,
-                        [targetPath]: {
-                            ...prev[targetPath],
-                            savedText: contentToSave,
-                            savedTitle: titleToSave
-                        }
-                    }));
-                }
-
-                setUnsavedFilesTracker(prev => ({ ...prev, [targetPath]: false }));
-            }
-        } catch (err) {
-            console.error("Sidebar save failed:", err);
-        }
-    };
-
-    const handleNewFileSaved = (newPath: string, newName: string) => {
-        setActiveFiles(prev => {
-            if (!prev.find(f => f.path === newPath)) return [...prev, { name: newName, path: newPath }];
-            return prev;
-        });
-
-        if (projectPath && newPath.startsWith(projectPath)) {
-            setProjectFiles(prev => {
-                if (!prev.find(f => f.path === newPath)) {
-                    const updated = [...prev, { name: newName, path: newPath }];
-                    updated.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-                    return updated;
-                }
-                return prev;
-            });
-        }
-    };
-
-    const handleDeleteFileFromProject = (targetPath: string) => {
-        setFileToDelete(targetPath);
-        setIsConfirmDeleteOpen(true);
-    };
-
-    const executeDelete = async () => {
-        if (!fileToDelete) return;
-
-        const targetPath = fileToDelete;
-
-        try {
-            await invoke('delete_document', { path: targetPath });
-
-            setProjectFiles(prev => prev.filter(f => f.path !== targetPath));
-            setActiveFiles(prev => prev.filter(f => f.path !== targetPath));
-
-            setFileBuffers(prev => {
-                const newBuffers = { ...prev };
-                delete newBuffers[targetPath];
-                return newBuffers;
-            });
-            setUnsavedFilesTracker(prev => {
-                const newTracker = { ...prev };
-                delete newTracker[targetPath];
-                return newTracker;
-            });
-
-            if (filePath === targetPath) {
-                setText("");
-                setTitle("");
-                setSavedText("");
-                setSavedTitle("");
-                setFilePath(null);
-                setIsFileTracked(false);
-            }
-        } catch (error) {
-            console.error("Failed to delete file:", error);
-        } finally {
-            setFileToDelete(null);
-        }
-    };
-
+    // 1. Remove initial pre-hydration splash overlay once the React tree mounts
     useEffect(() => {
-        if (filePath) {
-            const isDirty = text !== savedText || title !== savedTitle;
-            setUnsavedFilesTracker(prev => ({
-                ...prev,
-                [filePath]: isDirty
-            }));
+        const loader = document.getElementById("initial-loader");
+        if (loader) {
+            loader.classList.add("loader-hidden");
+            const timer = setTimeout(() => loader.remove(), 260);
+            return () => clearTimeout(timer);
         }
-    }, [text, title, savedText, savedTitle, filePath]);
-
-    useEffect(() => {
-        const savedFontSize = localStorage.getItem('floxt_fontSize');
-        if (savedFontSize) setFontSize(parseInt(savedFontSize, 10));
-
-        const savedLineNumbers = localStorage.getItem('floxt_showLineNumbers');
-        if (savedLineNumbers !== null) setShowLineNumbers(savedLineNumbers === 'true');
-
-        const savedAutoSave = localStorage.getItem('floxt_autoSave');
-        if (savedAutoSave !== null) setAutoSave(savedAutoSave === 'true');
-
-        const savedShortcuts = localStorage.getItem('floxt_showShortcuts');
-        if (savedShortcuts !== null) setShowShortcuts(savedShortcuts === 'true');
-
-        const savedTheme = localStorage.getItem('floxt_theme') as 'light' | 'dark' | 'system';
-        if (savedTheme) setTheme(savedTheme);
-
-        const savedPanelPosition = localStorage.getItem('floxt_panelPosition') as 'left' | 'right';
-        if (savedPanelPosition) setPanelPosition(savedPanelPosition);
-
-        setIsLoaded(true);
     }, []);
 
+    // 2. Intercept native window close events via Tauri when unsaved changes exist
     useEffect(() => {
-        if (!isLoaded) return;
+        let isMounted = true;
+        let unlistenFn: (() => void) | undefined;
 
-        localStorage.setItem('floxt_fontSize', fontSize.toString());
-        localStorage.setItem('floxt_showLineNumbers', showLineNumbers.toString());
-        localStorage.setItem('floxt_autoSave', autoSave.toString());
-        localStorage.setItem('floxt_showShortcuts', showShortcuts.toString());
-        localStorage.setItem('floxt_theme', theme);
-        localStorage.setItem('floxt_panelPosition', panelPosition);
-    }, [fontSize, showLineNumbers, autoSave, showShortcuts, theme, panelPosition, isLoaded]);
-
-    useEffect(() => {
-        const root = window.document.documentElement;
-
-        const applyTheme = () => {
-            if (theme === 'system') {
-                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (systemPrefersDark) root.classList.add('dark');
-                else root.classList.remove('dark');
-            } else if (theme === 'dark') {
-                root.classList.add('dark');
-            } else {
-                root.classList.remove('dark');
-            }
-        };
-
-        applyTheme();
-
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const handleChange = () => {
-            if (theme === 'system') applyTheme();
-        };
-
-        mediaQuery.addEventListener('change', handleChange);
-        return () => mediaQuery.removeEventListener('change', handleChange);
-    }, [theme]);
-
-    useEffect(() => {
-        const checkInitialFile = async () => {
-            if (typeof window !== 'undefined' && !('__TAURI_INTERNALS__' in window)) {
+        const setupCloseListener = async () => {
+            if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
                 return;
             }
 
             try {
-                const fileData = await invoke<{ name: string, content: string, path: string } | null>('get_initial_file');
+                const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+                const appWindow = getCurrentWebviewWindow();
 
-                if (fileData) {
-                    setText(fileData.content);
-                    setTitle(fileData.name);
-                    setSavedText(fileData.content);
-                    setSavedTitle(fileData.name);
-                    setIsFileTracked(true);
-                    setFilePath(fileData.path);
+                // Listen for native close requests (e.g. titlebar close button, Alt+F4)
+                const unlisten = await appWindow.onCloseRequested(async (event) => {
+                    if (hasUnsavedRef.current) {
+                        event.preventDefault();
+                        setIsExitWarningOpen(true);
+                    }
+                });
+
+                if (!isMounted) {
+                    unlisten();
+                } else {
+                    unlistenFn = unlisten;
                 }
-            } catch (error) {
-                const errMsg = String(error);
-                if (!errMsg.includes("window") && !errMsg.includes("not a function")) {
-                    setText(`--- RUST ERROR ---\n\n${errMsg}`);
-                }
+            } catch (err) {
+                console.error("Failed to register close listener:", err);
             }
         };
 
-        checkInitialFile();
+        setupCloseListener();
+
+        // Clean up close listener when unmounting
+        return () => {
+            isMounted = false;
+            if (unlistenFn) unlistenFn();
+        };
     }, []);
 
-    const hasUnsavedChanges = text !== savedText || title !== savedTitle;
+    // Force close/destroy the native Tauri window or fallback to standard window.close()
+    const handleForceExit = async () => {
+        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+            const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+            const appWindow = getCurrentWebviewWindow();
+            await appWindow.destroy();
+        } else {
+            window.close();
+        }
+    };
+
+    // 3. Show the welcome guide modal automatically on the very first launch
+    useEffect(() => {
+        const hasSeenGuide = localStorage.getItem("floxt_has_seen_guide");
+        if (!hasSeenGuide) {
+            setIsWelcomeGuideOpen(true);
+        }
+    }, []);
+
+    // Dismiss welcome guide and mark it as seen in localStorage
+    const handleCloseGuide = () => {
+        setIsWelcomeGuideOpen(false);
+        localStorage.setItem("floxt_has_seen_guide", "true");
+    };
 
     return (
-        <main className={`flex w-full min-h-screen p-4 gap-6 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-200 ${panelPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
+        <main className={`flex w-full h-[calc(100vh-30px)] mt-[30px] p-4 gap-6 overflow-y-auto bg-transparent transition-colors duration-200 ${panelPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
+            {/* Sidebar navigation and file management panel */}
             <PanelLayout
                 text={text}
                 setText={setText}
@@ -385,23 +129,8 @@ export default function Home() {
                 hasUnsavedChanges={hasUnsavedChanges}
                 isFileTracked={isFileTracked}
                 setIsFileTracked={setIsFileTracked}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                fontSize={fontSize}
-                setFontSize={setFontSize}
-                showLineNumbers={showLineNumbers}
-                setShowLineNumbers={setShowLineNumbers}
-                autoSave={autoSave}
-                setAutoSave={setAutoSave}
-                showShortcuts={showShortcuts}
-                setShowShortcuts={setShowShortcuts}
-                theme={theme}
-                setTheme={setTheme}
-                panelPosition={panelPosition}
-                setPanelPosition={setPanelPosition}
                 filePath={filePath}
                 setFilePath={setFilePath}
-
                 projectName={projectName}
                 projectFiles={projectFiles.map(f => ({
                     ...f,
@@ -412,12 +141,15 @@ export default function Home() {
                 onSaveFileFromProject={handleSaveFileFromProject}
                 onNewFileSaved={handleNewFileSaved}
                 onDeleteFileFromProject={handleDeleteFileFromProject}
+                onOpenGuide={() => setIsWelcomeGuideOpen(true)}
             />
+
+            {/* Central editing workspace */}
             <div className="flex-1 flex flex-col min-w-0">
-                {/* File Tabs (Only show if a project is open) */}
+                {/* Project tab bar for opened documents */}
                 {projectName && activeFiles.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
-                        {activeFiles.map((file: { name: string, path: string }, idx: number) => (
+                        {activeFiles.map((file, idx) => (
                             <div
                                 key={idx}
                                 className={`flex items-center gap-2 px-3 py-1.5 border rounded-md cursor-pointer transition-colors ${filePath === file.path
@@ -428,10 +160,7 @@ export default function Home() {
                             >
                                 <span className="text-sm font-medium truncate max-w-[120px]">{file.name}</span>
                                 <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleCloseTab(file.path);
-                                    }}
+                                    onClick={(e) => { e.stopPropagation(); handleCloseTab(file.path); }}
                                     className="p-0.5 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-full"
                                 >
                                     <span className="text-xs font-bold leading-none select-none">✕</span>
@@ -440,7 +169,11 @@ export default function Home() {
                         ))}
                     </div>
                 )}
+
+                {/* Editable note title component */}
                 <NoteTitle title={title} setTitle={setTitle} />
+
+                {/* Core markdown and text editor component */}
                 <TextEditor
                     text={text}
                     setText={setText}
@@ -448,14 +181,31 @@ export default function Home() {
                     setViewMode={setViewMode}
                     fontSize={fontSize}
                     showLineNumbers={showLineNumbers}
+                    lineWrap={lineWrap}
                 />
             </div>
-            <ConfirmModal 
+
+            {/* Modal dialog confirming file deletion */}
+            <ConfirmModal
                 isOpen={isConfirmDeleteOpen}
                 onClose={() => setIsConfirmDeleteOpen(false)}
                 onConfirm={executeDelete}
                 title="Delete Note"
                 message={`Are you sure you want to permanently delete "${fileToDelete?.split(/[\\/]/).pop()}"? This action cannot be undone.`}
+            />
+
+            {/* Introductory guide modal for first-time users */}
+            <WelcomeGuideModal
+                isOpen={isWelcomeGuideOpen}
+                onClose={handleCloseGuide}
+            />
+
+            {/* Exit confirmation modal intercepting close events with unsaved work */}
+            <ExitWarningModal
+                isOpen={isExitWarningOpen}
+                onClose={() => setIsExitWarningOpen(false)}
+                onConfirmExit={handleForceExit}
+                hasProjectUnsaved={Object.values(unsavedFilesTracker).some(Boolean)}
             />
         </main>
     );

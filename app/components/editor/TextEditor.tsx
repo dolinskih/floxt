@@ -404,9 +404,10 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                                     fontFamily: "var(--font-cascadia-code), monospace",
                                     fontVariantLigatures: "none",
                                     WebkitTextSizeAdjust: "none",
-                                    tabSize: 4
+                                    tabSize: 4,
+                                    scrollbarGutter: "stable"
                                 }}
-                                className={`absolute inset-0 px-4 pt-4 pb-12 font-mono text-neutral-900 dark:text-gray-200 pointer-events-none overflow-hidden ${lineWrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'
+                                className={`absolute inset-0 px-4 pt-4 pb-12 font-mono text-neutral-900 dark:text-gray-200 pointer-events-none overflow-hidden ${lineWrap ? 'whitespace-pre-wrap break-words overflow-y-auto overflow-x-hidden' : 'whitespace-pre overflow-auto'
                                     }`}
                                 aria-hidden="true"
                             >
@@ -430,7 +431,8 @@ export default function TextEditor({ text, setText, viewMode, setViewMode, fontS
                                     fontFamily: "var(--font-cascadia-code), monospace",
                                     fontVariantLigatures: "none",
                                     WebkitTextSizeAdjust: "none",
-                                    tabSize: 4
+                                    tabSize: 4,
+                                    scrollbarGutter: "stable"
                                 }}
                                 className={`absolute inset-0 px-4 pt-4 pb-12 font-mono bg-transparent text-transparent caret-black dark:caret-white resize-none outline-none z-10 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 ${lineWrap
                                         ? 'whitespace-pre-wrap break-words overflow-y-auto overflow-x-hidden'

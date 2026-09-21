@@ -168,6 +168,11 @@ fn get_package_family_name() -> String {
     }
 }
 
+#[tauri::command]
+fn show_main_window(window: tauri::WebviewWindow) {
+    let _ = window.show();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -180,7 +185,8 @@ pub fn run() {
             read_document,
             delete_document,
             update_window_theme,
-            get_package_family_name
+            get_package_family_name,
+            show_main_window
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

@@ -7,9 +7,9 @@ Fast and capable note-taking app.
 	<img src="https://get.microsoft.com/images/en-us%20light.svg" width="200"/>
 </a>
 
-**Current release version**: 1.0.0
+**Current release version**: 1.0.1
 
-**Current development version**: 1.0.1
+**Current development version**: 1.0.2
 
 ## Installation
 ### Desktop app

@@ -9,6 +9,7 @@ import WelcomeGuideModal from "./components/modals/WelcomeGuideModal";
 import { useSettings } from "./contexts/SettingsContext";
 import { useProjectManager } from "./hooks/useProjectManager";
 import ExitWarningModal from "./components/modals/ExitWarningModal";
+import { invoke } from "@tauri-apps/api/core";
 
 export default function Home() {
     // Global editor and UI layout preferences retrieved from context
@@ -115,6 +116,10 @@ export default function Home() {
         setIsWelcomeGuideOpen(false);
         localStorage.setItem("floxt_has_seen_guide", "true");
     };
+
+    useEffect(() => {
+        invoke("show_main_window").catch(console.error);
+    }, []);
 
     return (
         <main className={`flex w-full h-[calc(100vh-30px)] mt-[30px] p-4 gap-6 overflow-y-auto bg-transparent transition-colors duration-200 ${panelPosition === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>

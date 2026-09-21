@@ -3,9 +3,13 @@ Fast and capable note-taking app.
 
 ![Floxt logo](https://github.com/dolinskih/floxt/blob/version-0.4/src-tauri/icons/128x128%402x.png)
 
-**Current release version**: 0.4 (Pre-release)
+<a href="https://get.microsoft.com/installer/download/9NDVSRJ53DVK?referrer=appbadge" target="_self" >
+	<img src="https://get.microsoft.com/images/en-us%20light.svg" width="200"/>
+</a>
 
-**Current development version**: 1.0
+**Current release version**: 1.0.0
+
+**Current development version**: 1.0.1
 
 ## Installation
 ### Desktop app
@@ -19,14 +23,14 @@ Go to the [Releases page](https://github.com/dolinskih/floxt/releases/latest) of
 
 ## Running development environment
 - To run in web browser use `npm run dev`.
-- To run in desktop application use `npx tauri dev`.
+- To run in desktop application use `npm run tauri dev`.
 
 ## Running public environment (build)
 ### Web app
 1. Create app build using `npm run build` in the terminal.
 2. Run the app using `npm run start` in the terminal.
 ### Desktop app
-1. Create app build using `npx tauri build` in the terminal.
+1. Create app build using `npm run tauri build` in the terminal.
 2. Install the app using the generated installer.
 
 ## Floxt usage tips

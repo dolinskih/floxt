@@ -312,7 +312,7 @@ export default function PanelLayout({
                                 <div className="flex items-center gap-2 overflow-hidden pr-2">
                                     {/* Unsaved changes indicator dot */}
                                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${file.hasUnsavedChanges ? 'bg-yellow-500' : 'bg-transparent'}`} />
-                                    <span className="truncate text-neutral-700 dark:text-neutral-300 font-medium">{file.name}</span>
+                                    <span className="truncate text-neutral-700 dark:text-neutral-300 font-medium text overflow-hidden text-ellipsis max-w-[200px]">{file.name}</span>
                                 </div>
                                 <div className="flex gap-1.5">
                                     <button onClick={() => onOpenFileFromProject?.(file.path)} className="flex items-center gap-1 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded text-[10px] font-bold text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm">

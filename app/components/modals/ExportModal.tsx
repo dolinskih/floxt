@@ -17,13 +17,14 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
     const fileName = title.trim() === "" ? "Exported_Note" : title;
 
     // Handles generating a web document and prompting a download.
-    const exportToHtml = () => {
-        triggerDownload(generateHTML(text, fileName), `${fileName}.html`, "text/html");
+    const exportToHtml = async () => {
+        const htmlContent = await generateHTML(text, fileName);
+        triggerDownload(htmlContent, `${fileName}.html`, "text/html");
     };
 
     // Creates an invisible iframe to render the HTML document and triggers the browser's print-to-PDF dialog.
-    const exportToPdf = () => {
-        const htmlContent = generateHTML(text, fileName);
+    const exportToPdf = async () => {
+        const htmlContent = await generateHTML(text, fileName);
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         document.body.appendChild(iframe);
@@ -47,8 +48,8 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
     };
 
     // Handles parsing the note into standard markdown and prompting a download.
-    const exportToMarkdown = () => {
-        const md = convertFloxtToMarkdown(text);
+    const exportToMarkdown = async () => {
+        const md = await convertFloxtToMarkdown(text);
         triggerDownload(md, `${fileName}.md`, "text/markdown");
     }
 

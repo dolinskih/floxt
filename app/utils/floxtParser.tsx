@@ -1,4 +1,7 @@
 // --- 1. DOM UTILS ---
+
+import { invoke } from "@tauri-apps/api/core";
+
 // Creates a blob from text content and triggers an automatic browser download.
 export const triggerDownload = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType });
@@ -162,224 +165,19 @@ export const parseFloxt = (rawText: string) => {
 
 // --- 3. IMPORT / EXPORT PARSERS ---
 // Replaces standard Markdown formatting with custom Floxt tags during imports.
-export const convertMarkdownToFloxt = (md: string): string => {
-    let floxt = md;
-
-    // 1. Multi-line blocks (Code)
-    floxt = floxt.replace(/```([\s\S]*?)```/g, (match, p1) => {
-        return `/code;\n${p1.trim()}\n;/`;
-    });
-
-    // 2. Inline styling (Bold, italic, strikethrough, highlight)
-    floxt = floxt.replace(/\*\*(.*?)\*\*/g, '/b;$1;/');
-    floxt = floxt.replace(/__(.*?)__/g, '/b;$1;/');
-    floxt = floxt.replace(/\*(.*?)\*/g, '/i;$1;/');
-    floxt = floxt.replace(/_(.*?)_/g, '/i;$1;/');
-    floxt = floxt.replace(/~~(.*?)~~/g, '/s;$1;/');
-    floxt = floxt.replace(/==(.*?)==/g, '/h;$1;/');
-    floxt = floxt.replace(/<mark>(.*?)<\/mark>/gi, '/h;$1;/');
-
-    // 3. Media and Links
-    floxt = floxt.replace(/!\[(.*?)\]\((.*?)\)/g, '/img;$2;$1;/');
-    floxt = floxt.replace(/\[(.*?)\]\((.*?)\)/g, '/link;$2;$1;/');
-
-    // 4. Line-by-line block elements (Headings, Lists, Checkboxes)
-    const lines = floxt.split('\n');
-    const processedLines = lines.map(line => {
-        const hMatch = line.match(/^(#{1,6})\s+(.*)$/);
-        if (hMatch) {
-            const level = hMatch[1].length;
-            return `/h${level};${hMatch[2]};/`;
-        }
-
-        const uncheckedMatch = line.match(/^[\*\-]\s+\[\s\]\s+(.*)$/);
-        if (uncheckedMatch) return `/[];${uncheckedMatch[1]}`;
-
-        const checkedMatch = line.match(/^[\*\-]\s+\[[xX]\]\s+(.*)$/);
-        if (checkedMatch) return `/[x];${checkedMatch[1]}`;
-
-        const ulMatch = line.match(/^[\*\-]\s+(.*)$/);
-        if (ulMatch) return `/-;${ulMatch[1]};/`;
-
-        const olMatch = line.match(/^\d+\.\s+(.*)$/);
-        if (olMatch) return `/0;${olMatch[1]};/`;
-
-        return line;
-    });
-
-    return processedLines.join('\n');
+export const convertMarkdownToFloxt = async (md: string): Promise<string> => {
+    const converted = await invoke<string>("convert_markdown_to_floxt", { md: md });
+    return converted;
 };
 
 // Iteratively strips custom Floxt markup tags to generate standard Markdown outputs.
-export const convertFloxtToMarkdown = (text: string): string => {
-    let md = text;
-    let previous;
-
-    do {
-        previous = md;
-        md = md.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
-            switch (tag) {
-                case 'h1': return `# ${content}`;
-                case 'h2': return `## ${content}`;
-                case 'h3': return `### ${content}`;
-                case 'h4': return `#### ${content}`;
-                case 'h5': return `##### ${content}`;
-                case 'h6': return `###### ${content}`;
-                case 'b': return `**${content}**`;
-                case 'i': return `*${content}*`;
-                case 'u': return `<u>${content}</u>`;
-                case 's': return `~~${content}~~`;
-                case 'h': return `==${content}==`;
-                case '-': {
-                    const cleanContent = content.trim();
-                    return cleanContent.replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '- $1\n') + '\n';
-                }
-                case '0':
-                case 'O': {
-                    let i = 1;
-                    const cleanContent = content.trim();
-                    return cleanContent.replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, () => `${i++}. $1\n`) + '\n';
-                }
-                case 'code': return `\`\`\`\n${content}\n\`\`\``;
-
-                case 'table': {
-                    const lines = content.trim().split(/\r?\n/);
-                    if (lines.length === 0) return '';
-                    const headers = lines[0].split('|').map((c: string) => c.trim());
-                    const headerRow = `| ${headers.join(' | ')} |`;
-                    const separatorRow = `| ${headers.map(() => '---').join(' | ')} |`;
-                    let bodyRows = '';
-                    if (lines.length > 1) {
-                        bodyRows = '\n' + lines.slice(1).map((line: string) => {
-                            return `| ${line.split('|').map((c: string) => c.trim()).join(' | ')} |`;
-                        }).join('\n');
-                    }
-                    return `\n${headerRow}\n${separatorRow}${bodyRows}\n`;
-                }
-
-                default: return content;
-            }
-        });
-
-        md = md.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, placeholder) => `[${placeholder}](${url})`);
-        md = md.replace(/\/img;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, altText) => `![${altText}](${url})`);
-
-    } while (md !== previous);
-
-    md = md.replace(/\/\[\];/g, '- [ ]');
-    md = md.replace(/\/\[x\];/gi, '- [x]');
-
-    return md;
+export const convertFloxtToMarkdown = async (text: string): Promise<string> => {
+    const converted = await invoke<string>("convert_floxt_to_markdown", { text: text });
+    return converted;
 };
 
 // Generates a fully contained HTML document string suitable for file export or PDF printing.
-export const generateHTML = (text: string, fileName: string): string => {
-    let html = text
-        .replace(/&/g, '__FLXT_AMP__')
-        .replace(/</g, '__FLXT_LT__')
-        .replace(/>/g, '__FLXT_GT__');
-    let previous;
-
-    do {
-        previous = html;
-        html = html.replace(/\/(h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|h);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img|h);)[\s\S])*?);\//g, (match, tag, content) => {
-            switch (tag) {
-                case 'h1': return `<h1>${content}</h1>`;
-                case 'h2': return `<h2>${content}</h2>`;
-                case 'h3': return `<h3>${content}</h3>`;
-                case 'h4': return `<h4>${content}</h4>`;
-                case 'h5': return `<h5>${content}</h5>`;
-                case 'h6': return `<h6>${content}</h6>`;
-                case 'b': return `<strong>${content}</strong>`;
-                case 'i': return `<em>${content}</em>`;
-                case 'u': return `<u>${content}</u>`;
-                case 's': return `<del>${content}</del>`;
-                case 'h': return `<mark>${content}</mark>`;
-                case '-': {
-                    const listItems = content.trim().replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li>$1</li>');
-                    return `<ul>\n${listItems}\n</ul>`;
-                }
-                case '0':
-                case 'O': {
-                    const listItems = content.trim().replace(/^\s*-\s*(.*)(?:\r?\n|$)/gm, '<li>$1</li>');
-                    return `<ol>\n${listItems}\n</ol>`;
-                }
-                case 'code': {
-                    const cleanContent = content.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
-                    return `<pre><code>${cleanContent}</code></pre>`;
-                }
-
-                case 'table': {
-                    const lines = content.trim().split(/\r?\n/);
-                    if (lines.length === 0) return '';
-
-                    const headers = lines[0].split('|').map((cell: string) => `<th>${cell.trim()}</th>`).join('');
-                    const thead = `<thead><tr>${headers}</tr></thead>`;
-
-                    let tbody = '';
-                    if (lines.length > 1) {
-                        const rows = lines.slice(1).map((line: string) => {
-                            const cells = line.split('|').map((cell: string) => `<td>${cell.trim()}</td>`).join('');
-                            return `<tr>${cells}</tr>`;
-                        }).join('');
-                        tbody = `<tbody>${rows}</tbody>`;
-                    }
-                    return `<table>${thead}${tbody}</table>`;
-                }
-
-                default: return content;
-            }
-        });
-
-        html = html.replace(/\/link;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, placeholder) => `<a href="${url}">${placeholder}</a>`);
-        html = html.replace(/\/img;([^;]+);((?:(?!\/(?:h1|h2|h3|h4|h5|h6|b|i|u|s|-|0|O|code|table|link|img);)[\s\S])*?);\//g, (match, url, altText) => `<img src="${url}" alt="${altText}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" loading="lazy" />`);
-
-    } while (html !== previous);
-
-    html = html.replace(/\/\[\];/g, '<input type="checkbox" disabled />');
-    html = html.replace(/\/\[x\];/gi, '<input type="checkbox" checked disabled />');
-
-    html = html
-        .replace(/__FLXT_AMP__/g, '&amp;')
-        .replace(/__FLXT_LT__/g, '&lt;')
-        .replace(/__FLXT_GT__/g, '&gt;');
-
-    return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${fileName}</title>
-    <style>
-        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #171717; background-color: #fdfdfd; white-space: pre-wrap; transition: background-color 0.2s, color 0.2s; }
-        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre; border: 1px solid #e5e5e5; }
-        code { font-family: monospace; }
-        a { color: #2563eb; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { border: 1px solid #e5e5e5; padding: 10px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        
-        @media (prefers-color-scheme: dark) {
-            body { color: #e5e5e5; background-color: #0a0a0a; }
-            pre { background: #171717; border-color: #262626; }
-            a { color: #60a5fa; }
-            th, td { border-color: #262626; }
-            th { background-color: #171717; }
-        }
-
-        @media print {
-            @page { margin: 0; } 
-            body { background-color: white !important; color: black !important; margin: 0; padding: 0.5in; }
-            pre { background: #f4f4f4 !important; border-color: #ccc !important; }
-            a { color: #2563eb !important; text-decoration: none; }
-            table { page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
-        }
-    </style>
-</head>
-<body>
-${html}
-</body>
-</html>`.trim();
+export const generateHTML = async (text: string, fileName: string): Promise<string> => {
+    const generated = await invoke<string>("generate_html", { text: text, fileName: fileName });
+    return generated;
 };

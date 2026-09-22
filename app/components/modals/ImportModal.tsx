@@ -30,12 +30,12 @@ export default function ImportModal({ isOpen, onClose, onImport }: ImportModalPr
         const isMarkdown = file.name.toLowerCase().endsWith('.md');
 
         const reader = new FileReader();
-        reader.onload = (event: ProgressEvent<FileReader>) => {
+        reader.onload = async (event: ProgressEvent<FileReader>) => {
             if (event.target?.result) {
                 let content = event.target.result as string;
 
                 if (isMarkdown) {
-                    content = convertMarkdownToFloxt(content);
+                    content = await convertMarkdownToFloxt(content);
                 }
 
                 onImport(fileNameWithoutExt, content);

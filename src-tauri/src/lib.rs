@@ -2,6 +2,8 @@ use serde::Serialize;
 use std::fs;
 use tauri::Manager;
 
+pub mod floxt_parser;
+
 #[derive(Serialize)]
 pub struct ProjectFileInfo {
     name: String,
@@ -186,7 +188,10 @@ pub fn run() {
             delete_document,
             update_window_theme,
             get_package_family_name,
-            show_main_window
+            show_main_window,
+            floxt_parser::convert_markdown_to_floxt,
+            floxt_parser::convert_floxt_to_markdown,
+            floxt_parser::generate_html
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

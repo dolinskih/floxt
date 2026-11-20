@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cascadia_Code } from "next/font/google";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { ToastProvider } from "./contexts/ToastContext";
 import Titlebar from "./components/layout/Titlebar";
 import "./globals.css";
 
@@ -42,10 +43,12 @@ export default function RootLayout({
           />
         </div>
 
-        {/* Global application settings context, custom desktop titlebar, and main view */}
+        {/* Global application settings context, toast notifications, custom desktop titlebar, and main view */}
         <SettingsProvider>
-          <Titlebar />
-          {children}
+          <ToastProvider>
+            <Titlebar />
+            {children}
+          </ToastProvider>
         </SettingsProvider>
       </body>
     </html>

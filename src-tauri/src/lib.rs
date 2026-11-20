@@ -136,6 +136,11 @@ fn delete_document(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn write_exported_file(path: String, content: String) -> Result<(), String> {
+    std::fs::write(&path, content).map_err(|e| format!("Failed to export file: {}", e))
+}
+
+#[tauri::command]
 fn update_window_theme(app: tauri::AppHandle, is_dark: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
@@ -186,6 +191,7 @@ pub fn run() {
             read_project_dir,
             read_document,
             delete_document,
+            write_exported_file,
             update_window_theme,
             get_package_family_name,
             show_main_window,
@@ -440,6 +446,29 @@ mod tests {
         assert!(result_failure.is_err(), "Function should return an error when deleting a missing file.");
 
         // Clean up temporary directory 
+        fs::remove_dir_all(&temp_dir).unwrap();
+    }
+
+    #[test]
+    fn should_write_exported_file() {
+        use std::fs;
+
+        let temp_dir = std::env::temp_dir().join("floxt_export_test_dir");
+        let _ = fs::remove_dir_all(&temp_dir);
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let export_path = temp_dir.join("exported_note.md");
+        let expected_content = "# Exported Note\n\nHello world!";
+
+        let result = write_exported_file(
+            export_path.to_string_lossy().into_owned(),
+            expected_content.to_string(),
+        );
+
+        assert!(result.is_ok(), "Failed to write exported file.");
+        let written = fs::read_to_string(&export_path).unwrap();
+        assert_eq!(written, expected_content, "Exported content does not match.");
+
         fs::remove_dir_all(&temp_dir).unwrap();
     }
 }

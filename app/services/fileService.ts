@@ -23,6 +23,10 @@ export const fileService = {
         await invoke('delete_document', { path });
     },
 
+    writeExportedFile: async (path: string, content: string): Promise<void> => {
+        await invoke('write_exported_file', { path, content });
+    },
+
     getInitialFile: async (): Promise<{ name: string, content: string, path: string } | null> => {
         return await invoke<{ name: string, content: string, path: string } | null>('get_initial_file');
     },
@@ -51,6 +55,19 @@ export const fileService = {
             title: 'Save New Note',
             defaultPath,
             filters: [{ name: 'Floxt File', extensions: ['floxt'] }]
+        });
+    },
+
+    // Wraps Tauri's native OS save dialog for exporting notes to Markdown or HTML
+    exportFileDialog: async (
+        defaultFilename: string,
+        extension: string,
+        filterName: string
+    ): Promise<string | null> => {
+        return await save({
+            title: `Export as ${filterName}`,
+            defaultPath: defaultFilename,
+            filters: [{ name: filterName, extensions: [extension] }]
         });
     }
 };

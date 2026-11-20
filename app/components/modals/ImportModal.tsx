@@ -1,9 +1,11 @@
 "use client"; // Flags the component to run entirely in the browser.
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Modal from './Modal';
 import { FileUp } from 'lucide-react';
 import { convertMarkdownToFloxt } from '../../utils/floxtParser';
+import { fileService } from '../../services/fileService';
+import { useToast } from '../../contexts/ToastContext';
 
 // Describes the structure for state control and the callback firing upon import completion.
 interface ImportModalProps {
@@ -12,17 +14,109 @@ interface ImportModalProps {
     onImport: (title: string, content: string) => void;
 }
 
+const VALID_EXTENSIONS = ['.md', '.txt', '.floxt'];
+
 export default function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
     const fileInputRef = useRef<HTMLInputElement>(null); // References the hidden file input element.
     const [isDragging, setIsDragging] = useState(false);
+    const { showToast } = useToast();
+
+    // Reads a native file path dropped onto the Tauri window, validates its extension, and imports it.
+    const processFilePath = useCallback(async (filePath: string) => {
+        const fileName = filePath.split(/[\\/]/).pop() || "";
+        const lowerName = fileName.toLowerCase();
+        const isValid = VALID_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+
+        if (!isValid) {
+            showToast({
+                type: "error",
+                title: "Unsupported file format",
+                message: "Please select a valid .md, .txt, or .floxt file.",
+            });
+            return;
+        }
+
+        const fileNameWithoutExt = fileName.replace(/\.(md|txt|floxt)$/i, "");
+        const isMarkdown = lowerName.endsWith('.md');
+
+        try {
+            let content = await fileService.readDocument(filePath);
+            if (isMarkdown) {
+                content = await convertMarkdownToFloxt(content);
+            }
+            onImport(fileNameWithoutExt, content);
+        } catch (error) {
+            console.error("Failed to import dropped file:", error);
+            showToast({
+                type: "error",
+                title: "Failed to import file",
+                message: error instanceof Error ? error.message : String(error),
+            });
+        }
+    }, [onImport, showToast]);
+
+    // Listen for native Tauri drag-and-drop events while the modal is open.
+    // On Windows WebView2, Tauri intercepts OS file drops instead of firing HTML5 DOM drop events.
+    useEffect(() => {
+        if (!isOpen) {
+            setIsDragging(false);
+            return;
+        }
+
+        if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
+            return;
+        }
+
+        let isMounted = true;
+        let unlistenFn: (() => void) | undefined;
+
+        const setupDragDropListener = async () => {
+            try {
+                const { getCurrentWebview } = await import("@tauri-apps/api/webview");
+                const unlisten = await getCurrentWebview().onDragDropEvent((event) => {
+                    const payload = event.payload;
+                    if (payload.type === "enter" || payload.type === "over") {
+                        setIsDragging(true);
+                    } else if (payload.type === "leave") {
+                        setIsDragging(false);
+                    } else if (payload.type === "drop") {
+                        setIsDragging(false);
+                        const droppedPath = payload.paths?.[0];
+                        if (droppedPath) {
+                            processFilePath(droppedPath);
+                        }
+                    }
+                });
+
+                if (!isMounted) {
+                    unlisten();
+                } else {
+                    unlistenFn = unlisten;
+                }
+            } catch (err) {
+                console.error("Failed to register Tauri drag-and-drop listener:", err);
+            }
+        };
+
+        setupDragDropListener();
+
+        return () => {
+            isMounted = false;
+            setIsDragging(false);
+            if (unlistenFn) unlistenFn();
+        };
+    }, [isOpen, processFilePath]);
 
     // Reads the provided file, validates its extension, and converts it if necessary before importing.
     const processFile = (file: File) => {
-        const validExtensions = ['.md', '.txt', '.floxt'];
-        const isValid = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        const isValid = VALID_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(ext));
 
         if (!isValid) {
-            alert("Please select a valid .md, .txt, or .floxt file.");
+            showToast({
+                type: "error",
+                title: "Unsupported file format",
+                message: "Please select a valid .md, .txt, or .floxt file.",
+            });
             return;
         }
 
@@ -30,15 +124,24 @@ export default function ImportModal({ isOpen, onClose, onImport }: ImportModalPr
         const isMarkdown = file.name.toLowerCase().endsWith('.md');
 
         const reader = new FileReader();
-        reader.onload = (event: ProgressEvent<FileReader>) => {
+        reader.onload = async (event: ProgressEvent<FileReader>) => {
             if (event.target?.result) {
-                let content = event.target.result as string;
+                try {
+                    let content = event.target.result as string;
 
-                if (isMarkdown) {
-                    content = convertMarkdownToFloxt(content);
+                    if (isMarkdown) {
+                        content = await convertMarkdownToFloxt(content);
+                    }
+
+                    onImport(fileNameWithoutExt, content);
+                } catch (error) {
+                    console.error("Failed to import file:", error);
+                    showToast({
+                        type: "error",
+                        title: "Failed to import file",
+                        message: error instanceof Error ? error.message : String(error),
+                    });
                 }
-
-                onImport(fileNameWithoutExt, content);
             }
         };
         reader.readAsText(file);

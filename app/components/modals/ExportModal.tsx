@@ -1,8 +1,11 @@
 "use client"; // Flags the component to run exclusively on the client.
 
+import { useState } from "react";
 import Modal from "./Modal";
 import { Download } from "lucide-react";
 import { generateHTML, convertFloxtToMarkdown, triggerDownload } from "../../utils/floxtParser";
+import { fileService } from "../../services/fileService";
+import { useToast } from "../../contexts/ToastContext";
 
 // Sets up the properties needed to access the raw text and proposed file title.
 interface ExportModalProps {
@@ -13,44 +16,126 @@ interface ExportModalProps {
 }
 
 export default function ExportModal({ isOpen, onClose, text, title }: ExportModalProps) {
+    const { showToast } = useToast();
+    const [isExporting, setIsExporting] = useState(false);
+
     // Ensures a valid fallback filename is used if the title is empty.
     const fileName = title.trim() === "" ? "Exported_Note" : title;
 
-    // Handles generating a web document and prompting a download.
-    const exportToHtml = () => {
-        triggerDownload(generateHTML(text, fileName), `${fileName}.html`, "text/html");
+    const saveExportedFile = async (
+        content: string,
+        extension: string,
+        filterName: string,
+        mimeType: string
+    ) => {
+        const defaultFileName = `${fileName}.${extension}`;
+        const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+
+        if (isTauri) {
+            const selectedPath = await fileService.exportFileDialog(
+                defaultFileName,
+                extension,
+                filterName
+            );
+
+            // User cancelled the native save dialog
+            if (!selectedPath) return;
+
+            await fileService.writeExportedFile(selectedPath, content);
+            const savedName = selectedPath.split(/[\\/]/).pop() || defaultFileName;
+            onClose();
+            showToast({
+                type: "success",
+                title: `Exported to ${filterName}`,
+                message: savedName,
+                detail: selectedPath,
+            });
+        } else {
+            triggerDownload(content, defaultFileName, mimeType);
+            onClose();
+            showToast({
+                type: "success",
+                title: `Exported to ${filterName}`,
+                message: defaultFileName,
+            });
+        }
+    };
+
+    // Handles generating a web document and saving/downloading it.
+    const exportToHtml = async () => {
+        if (isExporting) return;
+        setIsExporting(true);
+        try {
+            const htmlContent = await generateHTML(text, fileName);
+            await saveExportedFile(htmlContent, "html", "HTML", "text/html");
+        } catch (error) {
+            console.error("Failed to export HTML:", error);
+            showToast({
+                type: "error",
+                title: "Failed to export HTML",
+                message: error instanceof Error ? error.message : String(error),
+            });
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     // Creates an invisible iframe to render the HTML document and triggers the browser's print-to-PDF dialog.
-    const exportToPdf = () => {
-        const htmlContent = generateHTML(text, fileName);
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
+    const exportToPdf = async () => {
+        if (isExporting) return;
+        setIsExporting(true);
+        try {
+            const htmlContent = await generateHTML(text, fileName);
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
 
-        const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
-        if (iframeDoc) {
-            iframeDoc.open();
-            iframeDoc.write(htmlContent);
-            iframeDoc.close();
-        }
-
-        setTimeout(() => {
-            iframe.contentWindow?.focus();
-            iframe.contentWindow?.print();
+            const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+            if (iframeDoc) {
+                iframeDoc.open();
+                iframeDoc.write(htmlContent);
+                iframeDoc.close();
+            }
 
             setTimeout(() => {
-                document.body.removeChild(iframe);
-                onClose();
-            }, 100);
-        }, 250);
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    setIsExporting(false);
+                    onClose();
+                }, 100);
+            }, 250);
+        } catch (error) {
+            console.error("Failed to export PDF:", error);
+            setIsExporting(false);
+            showToast({
+                type: "error",
+                title: "Failed to export PDF",
+                message: error instanceof Error ? error.message : String(error),
+            });
+        }
     };
 
-    // Handles parsing the note into standard markdown and prompting a download.
-    const exportToMarkdown = () => {
-        const md = convertFloxtToMarkdown(text);
-        triggerDownload(md, `${fileName}.md`, "text/markdown");
-    }
+    // Handles parsing the note into standard markdown and saving/downloading it.
+    const exportToMarkdown = async () => {
+        if (isExporting) return;
+        setIsExporting(true);
+        try {
+            const md = await convertFloxtToMarkdown(text);
+            await saveExportedFile(md, "md", "Markdown", "text/markdown");
+        } catch (error) {
+            console.error("Failed to export Markdown:", error);
+            showToast({
+                type: "error",
+                title: "Failed to export Markdown",
+                message: error instanceof Error ? error.message : String(error),
+            });
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Export Note">
@@ -60,7 +145,8 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                 {/* Markdown Export Option */}
                 <button
                     onClick={exportToMarkdown}
-                    className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors group cursor-pointer"
+                    disabled={isExporting}
+                    className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors group cursor-pointer"
                 >
                     <div className="bg-white dark:bg-neutral-900 p-2 rounded text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white border border-neutral-200 dark:border-transparent transition-colors">
                         <Download size={20} />
@@ -74,7 +160,8 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                 {/* HTML Export Option */}
                 <button
                     onClick={exportToHtml}
-                    className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors group cursor-pointer"
+                    disabled={isExporting}
+                    className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors group cursor-pointer"
                 >
                     <div className="bg-white dark:bg-neutral-900 p-2 rounded text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white border border-neutral-200 dark:border-transparent transition-colors">
                         <Download size={20} />
@@ -88,7 +175,8 @@ export default function ExportModal({ isOpen, onClose, text, title }: ExportModa
                 {/* PDF Print Option */}
                 <button
                     onClick={exportToPdf}
-                    className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors group cursor-pointer"
+                    disabled={isExporting}
+                    className="flex items-center gap-3 w-full p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors group cursor-pointer"
                 >
                     <div className="bg-white dark:bg-neutral-900 p-2 rounded text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white border border-neutral-200 dark:border-transparent transition-colors">
                         <Download size={20} />

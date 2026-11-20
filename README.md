@@ -7,10 +7,6 @@ Fast and capable note-taking app.
 	<img src="https://get.microsoft.com/images/en-us%20light.svg" width="200"/>
 </a>
 
-**Current release version**: 1.0.1
-
-**Current development version**: 1.0.2
-
 ## Installation
 ### Desktop app
 Go to the [Releases page](https://github.com/dolinskih/floxt/releases/latest) of the repository and choose Floxt either for Windows or Linux!
